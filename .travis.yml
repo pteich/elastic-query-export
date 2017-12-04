@@ -20,7 +20,7 @@ before_install:
 install:
   - dep ensure
 script:
-  - go build -o "es-query-csv-$GOOS.$GOARCH"
+  - go build -o "es-query-csv-${GOOS}.${GOARCH}"
 deploy:
   provider: releases
   api_key:
