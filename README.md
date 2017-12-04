@@ -22,7 +22,7 @@ es-query-export -e "http://localhost:9200" -i "logstash-2017.11.*" --fields="Rem
 | `-h --help`    |                       | show help      |
 | `-v --version` |                       | show version   |
 | `-e --eshost`  | http://localhost:9200 | URI to ElasticSearch instance  | 
-| `-i --index`   | logs-*                | name of index to use, you can use globbing characters |
+| `-i --index`   | logs-*                | name of index to use, use globbing characters * to match multiple |
 | `-q --query`   |                       | Lucene query to match documents (same as in Kibana) |
 | `-f --field`   | _all                  | limit export to specific field(s) add as many `-f` as you need |
 | `   --fields`  |                       | define a comma separated list of fields to export (overrides `-f`) |
