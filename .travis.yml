@@ -3,11 +3,13 @@ go:
   - 1.9
 gobuild_args: -x -ldflags "-X main.VersionString v1.0.0"
 env:
-  - DEP_VERSION="0.3.2"
-  - MY_GOOS=linux MY_GOARCH=amd64
-  - MY_GOOS=darwin MY_GOARCH=amd64
-  - MY_GOOS=windows MY_GOARCH=amd64
-  - MY_GOOS=windows MY_GOARCH=386
+  global:
+    - DEP_VERSION="0.3.2"
+  matrix:
+    - MY_GOOS=linux MY_GOARCH=amd64
+    - MY_GOOS=darwin MY_GOARCH=amd64
+    - MY_GOOS=windows MY_GOARCH=amd64
+    - MY_GOOS=windows MY_GOARCH=386
 before_install:
   - export GOOS="${MY_GOOS}"
   - export GOARCH="${MY_GOARCH}"
