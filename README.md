@@ -4,6 +4,11 @@ Export Data from ElasticSearch to CSV by Raw or Lucene Query (e.g. from Kibana).
 Works with ElasticSearch 5.x and makes use of ElasticSearch's Scroll API and Go's
 concurrency possibilities to work fast.
 
+## Install
+
+Download a pre-compiled binary for your operating system from here: https://github.com/pteich/elastic-query-export/releases
+You need just this binary. It works on OSX (Darwin), Linux and Windows.
+
 ## Usage
 
 ````bash
