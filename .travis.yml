@@ -1,0 +1,25 @@
+language: go
+go:
+- 1.9
+gobuild_args: -x -ldflags "-X main.VersionString v1.0.0"
+env:
+- MY_GOOS=linux MY_GOARCH=amd64
+- MY_GOOS=darwin MY_GOARCH=amd64
+- MY_GOOS=windows MY_GOARCH=amd64
+- MY_GOOS=windows MY_GOARCH=386
+before_install:
+- export GOROOT="${HOME}/go"
+- export PATH="${GOROOT}/bin:${PATH}"
+- export GOOS="${MY_GOOS}"
+- export GOARCH="${MY_GOARCH}"
+install: true
+script:
+- go build -o "es-query-csv-$GOOS.$GOARCH"
+deploy:
+  provider: releases
+  api_key:
+    secure: oxxAVwvp7iB+XXQsDmyK9SBnmIiSzepaoq0Yk0NVYA+CDhMHuiaqjwhpil31qhKp1pieX9MY9hyX6+WMbJuwv3Vm3H2Ut4GtlK83y/mrcsPi+zTPII6l8ThRjVCrD7vFTMX7R+3N9PK6BTFe6tND7nRcAnrHm8P9QGfFDuupRTna7W5k7TEPVg29S6dT2FCiWdApl+b/h5Y/0VzaS63XZ4Fap/rdcyCg1UKzLtnGL85wYXJPAjH05ZZNyvY1Fk+vj7Rwk1RbaIxi/gAmA4WOb1hscgxtXNI2OCUfg70m/KOVSjUkEamKcbqsQecQgoiuCUNQL9jkhHAXGmSBKiGWMMEMKxCaVaJizY5NjjZbtn1IOkOu44wUYiHCyHeL2keA1vY2EDf9igyTdYFL6Ee9mBf9JSMNERAHhN1jRj6ZpQ2g8u57+l1bMw9E0B1lvP2HolOq9lvEdu0aHghHslNJYRTdi6qVeIUmamZ4UdXJLwdixxmCroZpR/DqmzA5u9NckRjFINTiU+CJtKYVSg4ENrLn3F2tN5cEFTi5RWzoHjNzOMP+yL+zZqzmiwLKcKH42b1kSItYTwAvt/4EFk3xpQVDqpe/vsDYlkJwNYVH0ylyM1yaiXYpBIWpFleKwmG2kn1S+I6GKmZJlLNGkBkr8EBfR2Xh182q65rxO9Jy5cE=
+  file: "es-query-csv-*"
+  skip_cleanup: true
+  on:
+    tags: true
