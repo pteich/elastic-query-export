@@ -8,7 +8,7 @@ concurrency possibilities to work fast.
 ## Usage
 
 ````bash
-elastic-query-export -e "http://localhost:9200" -i "logstash-2017.11.01" --fields="RemoteHost,RequestTime,Timestamp,,RequestUri,RequestProtocol,Agent" -q "RequestUri:*export*"
+elastic-query-export -e "http://localhost:9200" -i "logstash-2017.11.*" --fields="RemoteHost,RequestTime,Timestamp,,RequestUri,RequestProtocol,Agent" -q "RequestUri:*export*"
 ````
 
 ## TODO
