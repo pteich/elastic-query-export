@@ -8,8 +8,6 @@ env:
 - MY_GOOS=windows MY_GOARCH=amd64
 - MY_GOOS=windows MY_GOARCH=386
 before_install:
-- export GOROOT="${HOME}/go"
-- export PATH="${GOROOT}/bin:${PATH}"
 - export GOOS="${MY_GOOS}"
 - export GOARCH="${MY_GOARCH}"
 install: true
