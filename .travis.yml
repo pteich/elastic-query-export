@@ -1,7 +1,6 @@
 language: go
 go:
   - 1.9
-gobuild_args: -x -ldflags "-X main.VersionString v1.0.0"
 env:
   - DEP_VERSION="0.3.2"
 before_install:
@@ -13,8 +12,9 @@ before_install:
 install:
   - dep ensure
 script:
+  - go test -v -covermode=count -coverprofile=coverage.out ./...
+after_success:
   - make build-gox
-  - ls -al
 jobs:
   include:
     - stage: deploy
