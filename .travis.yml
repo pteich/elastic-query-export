@@ -1,18 +1,24 @@
 language: go
 go:
-- 1.9
+  - 1.9
 gobuild_args: -x -ldflags "-X main.VersionString v1.0.0"
 env:
-- MY_GOOS=linux MY_GOARCH=amd64
-- MY_GOOS=darwin MY_GOARCH=amd64
-- MY_GOOS=windows MY_GOARCH=amd64
-- MY_GOOS=windows MY_GOARCH=386
+  - DEP_VERSION="0.3.2"
+  - MY_GOOS=linux MY_GOARCH=amd64
+  - MY_GOOS=darwin MY_GOARCH=amd64
+  - MY_GOOS=windows MY_GOARCH=amd64
+  - MY_GOOS=windows MY_GOARCH=386
 before_install:
-- export GOOS="${MY_GOOS}"
-- export GOARCH="${MY_GOARCH}"
-install: true
+  - export GOOS="${MY_GOOS}"
+  - export GOARCH="${MY_GOARCH}"
+  # Download the binary to bin folder in $GOPATH
+  - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
+  # Make the binary executable
+  - chmod +x $GOPATH/bin/dep
+install:
+  - dep ensure
 script:
-- go build -o "es-query-csv-$GOOS.$GOARCH"
+  - go build -o "es-query-csv-$GOOS.$GOARCH"
 deploy:
   provider: releases
   api_key:
