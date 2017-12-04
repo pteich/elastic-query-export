@@ -7,7 +7,7 @@ concurrency possibilities to work fast.
 ## Usage
 
 ````bash
-es-query-export -e "http://localhost:9200" -i "logstash-2017.11.*" --fields="RemoteHost,RequestTime,Timestamp,,RequestUri,RequestProtocol,Agent" -q "RequestUri:*export*"
+es-query-export -e "http://localhost:9200" -i "logstash-2017.11.*" --fields="RemoteHost,RequestTime,Timestamp,RequestUri,RequestProtocol,Agent" -q "RequestUri:*export*"
 ````
 
 ## CLI Options
