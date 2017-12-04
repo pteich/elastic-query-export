@@ -8,14 +8,15 @@ import (
 	"time"
 
 	"context"
-	"fmt"
 	"encoding/csv"
+	"fmt"
+
+	"strings"
 
 	"github.com/jawher/mow.cli"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/olivere/elastic.v5"
-	"strings"
 )
 
 var Version string
@@ -23,36 +24,40 @@ var Version string
 func main() {
 
 	app := cli.App("es-query-csv", "CLI tool to export data from ElasticSearch into a CSV file.")
+	app.Spec = "[-v -e -i -r -q -o -f]"
 	app.Version("v version", Version)
 
 	var (
 		configElasticURL = app.StringOpt("e eshost", "http://localhost:9200", "ElasticSearch URL")
-		configIndex = app.StringOpt("i index", "logs-*", "ElasticSearch Index (or Index Prefix)")
-		configRawQuery = app.StringOpt("r rawquery", "", "ElasticSearch Raw Querystring")
-		configQuery = app.StringOpt("q query", "", "Lucene Query like in Kibana search input")
-		configOutfile = app.StringOpt("o outfile", "output.csv", "Filepath for CSV output")
-		configFieldlist = app.StringOpt("fields", "", "Fields to include in export as comma separated list")
-		configFields = app.StringsOpt("f field", nil, "Field to include in export, can be added multiple for every field")
+		configIndex      = app.StringOpt("i index", "logs-*", "ElasticSearch Index (or Index Prefix)")
+		configRawQuery   = app.StringOpt("r rawquery", "", "ElasticSearch Raw Querystring")
+		configQuery      = app.StringOpt("q query", "", "Lucene Query like in Kibana search input")
+		configOutfile    = app.StringOpt("o outfile", "output.csv", "Filepath for CSV output")
+		configFieldlist  = app.StringOpt("fields", "", "Fields to include in export as comma separated list")
+		configFields     = app.StringsOpt("f field", nil, "Field to include in export, can be added multiple for every field")
 	)
 
 	app.Action = func() {
+
 		client, err := elastic.NewClient(
 			elastic.SetURL(*configElasticURL),
-			elastic.SetSniff(false),
+			elastic.SetSniff(true),
 			elastic.SetHealthcheckInterval(60*time.Second),
 			elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
 		)
 		if err != nil {
-			panic(err)
+			log.Printf("Error connecting to ElasticSearch - %v", err)
+			os.Exit(1)
 		}
+		defer client.Stop()
 
 		if *configFieldlist != "" {
-			*configFields = strings.Split(*configFieldlist,",")
+			*configFields = strings.Split(*configFieldlist, ",")
 		}
 
 		outfile, err := os.Create(*configOutfile)
 		if err != nil {
-			panic(err)
+			log.Printf("Error creating output file - %v", err)
 		}
 		defer outfile.Close()
 
@@ -70,7 +75,7 @@ func main() {
 		// Count total and setup progress
 		total, err := client.Count(*configIndex).Query(esQuery).Do(ctx)
 		if err != nil {
-			panic(err)
+			log.Printf("Error counting ElasticSearch documents - %v", err)
 		}
 		bar := pb.StartNew(int(total))
 
@@ -124,13 +129,13 @@ func main() {
 				csvheader = append(csvheader, field)
 			}
 			if err := w.Write(csvheader); err != nil {
-				fmt.Printf("Error: %v\n", err)
+				log.Printf("Error writing CSV header - %v", err)
 			}
 
 			for csvdata := range csvout {
 
 				if err := w.Write(csvdata); err != nil {
-					fmt.Printf("Error: %v\n", err)
+					log.Printf("Error writing CSV data - %v", err)
 				}
 
 				w.Flush()
@@ -150,7 +155,7 @@ func main() {
 					var csvdata []string
 
 					if err := json.Unmarshal(hit, &document); err != nil {
-						fmt.Printf("Error: %v\n", err)
+						log.Printf("Error unmarshal JSON from ElasticSearch - %v", err)
 					}
 
 					for _, field := range *configFields {
@@ -172,7 +177,7 @@ func main() {
 
 		// Check if any goroutines failed.
 		if err := g.Wait(); err != nil {
-			panic(err)
+			log.Printf("Error - %v", err)
 		}
 
 		bar.FinishPrint("Done")
