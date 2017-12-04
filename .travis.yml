@@ -19,11 +19,13 @@ before_install:
   - chmod +x $GOPATH/bin/dep
 install:
   - dep ensure
+script:
+  - go build -o "es-query-csv-${GOOS}.${GOARCH}"
+  - ls -al
 jobs:
   include:
-    - script: go build -o "es-query-csv-${GOOS}.${GOARCH}"
     - stage: deploy
-      script: skip
+      script: ls -al
       deploy:
         provider: releases
         api_key:
