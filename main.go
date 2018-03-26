@@ -24,14 +24,13 @@ var Version string
 func main() {
 
 	app := cli.App("es-query-csv", "CLI tool to export data from ElasticSearch into a CSV file.")
-	app.Spec = "[-v -e -i -r -q -o -f]"
 	app.Version("v version", Version)
 
 	var (
 		configElasticURL = app.StringOpt("e eshost", "http://localhost:9200", "ElasticSearch URL")
 		configIndex      = app.StringOpt("i index", "logs-*", "ElasticSearch Index (or Index Prefix)")
 		configRawQuery   = app.StringOpt("r rawquery", "", "ElasticSearch Raw Querystring")
-		configQuery      = app.StringOpt("q query", "", "Lucene Query like in Kibana search input")
+		configQuery      = app.StringOpt("q query", "*", "Lucene Query like in Kibana search input")
 		configOutfile    = app.StringOpt("o outfile", "output.csv", "Filepath for CSV output")
 		configFieldlist  = app.StringOpt("fields", "", "Fields to include in export as comma separated list")
 		configFields     = app.StringsOpt("f field", nil, "Field to include in export, can be added multiple for every field")
@@ -41,12 +40,12 @@ func main() {
 
 		client, err := elastic.NewClient(
 			elastic.SetURL(*configElasticURL),
-			elastic.SetSniff(true),
+			elastic.SetSniff(false),
 			elastic.SetHealthcheckInterval(60*time.Second),
 			elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
 		)
 		if err != nil {
-			log.Printf("Error connecting to ElasticSearch - %v", err)
+			log.Printf("Error connecting to ElasticSearch %s - %v", *configElasticURL, err)
 			os.Exit(1)
 		}
 		defer client.Stop()
