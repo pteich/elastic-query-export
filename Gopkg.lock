@@ -8,6 +8,17 @@
   version = "v1.0.3"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/mailru/easyjson"
+  packages = [
+    ".",
+    "buffer",
+    "jlexer",
+    "jwriter"
+  ]
+  revision = "8b799c424f57fa123fc63a99d6383bc6e4c02578"
+
+[[projects]]
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
   revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
@@ -23,25 +34,35 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "a8b9294777976932365dabb6640cf1468d95c70f"
+  revision = "b68f30494add4df6bd8ef5e82803f308e7f7c59c"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sync"
   packages = ["errgroup"]
-  revision = "fd80eb99c8f653c847d294a001bdf2a3a6f768f5"
+  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "378d26f46672a356c46195c28f61bdb4c0a781dd"
 
 [[projects]]
   name = "gopkg.in/cheggaaa/pb.v1"
   packages = ["."]
-  revision = "657164d0228d6bebe316fdf725c69f131a50fb10"
-  version = "v1.0.18"
+  revision = "72b964305fba1230d3d818711138195f22b9ceea"
+  version = "v1.0.22"
 
 [[projects]]
   name = "gopkg.in/olivere/elastic.v5"
-  packages = [".","config","uritemplates"]
-  revision = "79ff368708b3a2a9da641dc831d95fd0782bf4ef"
-  version = "v5.0.58"
+  packages = [
+    ".",
+    "config",
+    "uritemplates"
+  ]
+  revision = "dbe820f35164384c998099db63481b583d53f73b"
+  version = "v5.0.66"
 
 [solve-meta]
   analyzer-name = "dep"
