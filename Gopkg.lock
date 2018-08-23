@@ -2,71 +2,101 @@
 
 
 [[projects]]
+  digest = "1:487a533f9250f87ebdbbc85ba64ac6748c4424fd3946f8614c47f5634202168a"
   name = "github.com/jawher/mow.cli"
   packages = ["."]
+  pruneopts = ""
   revision = "0e80ee9f63156ea1954dc2375c33a1c7e752c25c"
   version = "v1.0.3"
 
 [[projects]]
   branch = "master"
+  digest = "1:88b08acd12881269e1d48265382fe6aad78d9d3e6145c8badea7dd1abe111de5"
   name = "github.com/mailru/easyjson"
   packages = [
     ".",
     "buffer",
     "jlexer",
-    "jwriter"
+    "jwriter",
   ]
+  pruneopts = ""
   revision = "8b799c424f57fa123fc63a99d6383bc6e4c02578"
 
 [[projects]]
+  digest = "1:81e673df85e765593a863f67cba4544cf40e8919590f04d67664940786c2b61a"
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
+  pruneopts = ""
   revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
   version = "v0.0.2"
 
 [[projects]]
+  digest = "1:0b9e515a5e0abbc3895e0e11fee88e3f236e624b1dbcd3a8db809d3a9405e9c4"
+  name = "github.com/olivere/elastic"
+  packages = ["."]
+  pruneopts = ""
+  revision = "d94782c1eadecb8e1d3dcd5f38ba533b66992ff2"
+  version = "v5.0.74"
+
+[[projects]]
+  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = ""
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:a2702fb9a1197a9d8dea2cdbc23f785d326563da44e261a8ecac9f1da5bad9cb"
   name = "golang.org/x/net"
   packages = ["context"]
+  pruneopts = ""
   revision = "b68f30494add4df6bd8ef5e82803f308e7f7c59c"
 
 [[projects]]
   branch = "master"
+  digest = "1:b2ea75de0ccb2db2ac79356407f8a4cd8f798fe15d41b381c00abf3ae8e55ed1"
   name = "golang.org/x/sync"
   packages = ["errgroup"]
+  pruneopts = ""
   revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
 
 [[projects]]
   branch = "master"
+  digest = "1:e80ec2e647548e8fd36bb104d39220f162b72f9222507f0fc1d5f0b7618a5e9f"
   name = "golang.org/x/sys"
   packages = ["unix"]
+  pruneopts = ""
   revision = "378d26f46672a356c46195c28f61bdb4c0a781dd"
 
 [[projects]]
+  digest = "1:5ca6e1c12640a5b9eb681c7260bcbe9cdee6db59cf063f7d300c0f68cb42d603"
   name = "gopkg.in/cheggaaa/pb.v1"
   packages = ["."]
+  pruneopts = ""
   revision = "72b964305fba1230d3d818711138195f22b9ceea"
   version = "v1.0.22"
 
 [[projects]]
+  digest = "1:bdf5bbcf8584c7e2bc630012ad3c9b1cc7bfb9cec912f34fb2e5d373ce61904e"
   name = "gopkg.in/olivere/elastic.v5"
   packages = [
-    ".",
     "config",
-    "uritemplates"
+    "uritemplates",
   ]
+  pruneopts = ""
   revision = "dbe820f35164384c998099db63481b583d53f73b"
   version = "v5.0.66"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "506c8bfb3c50bf48ebb821084e4a367d71e96ead81236a464053e99982d67352"
+  input-imports = [
+    "github.com/jawher/mow.cli",
+    "github.com/olivere/elastic",
+    "golang.org/x/sync/errgroup",
+    "gopkg.in/cheggaaa/pb.v1",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

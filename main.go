@@ -14,16 +14,16 @@ import (
 	"strings"
 
 	"github.com/jawher/mow.cli"
+	"github.com/olivere/elastic"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/cheggaaa/pb.v1"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 var Version string
 
 func main() {
 
-	app := cli.App("es-query-csv", "CLI tool to export data from ElasticSearch into a CSV file.")
+	app := cli.App("elastic-query-export", "CLI tool to export data from ElasticSearch into a CSV file. https://github.com/pteich/elastic-query-export")
 	app.Version("v version", Version)
 
 	var (
@@ -64,7 +64,7 @@ func main() {
 
 		var esQuery elastic.Query
 		if *configRawQuery != "" {
-			esQuery = elastic.NewRawStringQuery(*configQuery)
+			esQuery = elastic.NewRawStringQuery(*configRawQuery)
 		} else if *configQuery != "" {
 			esQuery = elastic.NewQueryStringQuery(*configQuery)
 		} else {

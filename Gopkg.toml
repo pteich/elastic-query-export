@@ -34,5 +34,5 @@
   version = "1.0.18"
 
 [[constraint]]
-  name = "gopkg.in/olivere/elastic.v5"
-  version = "5.0.58"
+  name = "github.com/olivere/elastic"
+  version = "^5.0.0"
