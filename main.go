@@ -1,22 +1,20 @@
 package main
 
 import (
+	"context"
+	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
-	"context"
-	"encoding/csv"
-	"fmt"
-
-	"strings"
-
+	"github.com/cheggaaa/pb"
 	"github.com/jawher/mow.cli"
 	"github.com/olivere/elastic"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/cheggaaa/pb.v1"
 )
 
 var Version string
@@ -179,7 +177,7 @@ func main() {
 			log.Printf("Error - %v", err)
 		}
 
-		bar.FinishPrint("Done")
+		bar.Finish()
 	}
 
 	app.Run(os.Args)
