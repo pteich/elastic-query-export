@@ -2,7 +2,7 @@
 
 Export Data from ElasticSearch to CSV by Raw or Lucene Query (e.g. from Kibana).
 Works with ElasticSearch 5.x and makes use of ElasticSearch's Scroll API and Go's
-concurrency possibilities to work fast.
+concurrency possibilities to work really fast.
 
 ## Install
 
@@ -12,7 +12,7 @@ You need just this binary. It works on OSX (Darwin), Linux and Windows.
 ## Usage
 
 ````bash
-es-query-export -e "http://localhost:9200" -i "logstash-2017.11.*" --fields="RemoteHost,RequestTime,Timestamp,RequestUri,RequestProtocol,Agent" -q "RequestUri:*export*"
+es-query-export -c "http://localhost:9200" -i "logstash-*" --startdate="2019-04-04T12:15:00" --fields="RemoteHost,RequestTime,Timestamp,RequestUri,RequestProtocol,Agent" -q "RequestUri:*export*"
 ````
 
 ## CLI Options
