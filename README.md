@@ -21,14 +21,14 @@ es-query-export -e "http://localhost:9200" -i "logstash-2017.11.*" --fields="Rem
 |--------------|-----------------------|----------------|
 | `-h --help`    |                       | show help      |
 | `-v --version` |                       | show version   |
-| `-e --eshost`  | http://localhost:9200 | URI to ElasticSearch instance  | 
+| `-c --connect` | http://localhost:9200 | URI to ElasticSearch instance  | 
 | `-i --index`   | logs-*                | name of index to use, use globbing characters * to match multiple |
 | `-q --query`   |                       | Lucene query to match documents (same as in Kibana) |
 | `-f --field`   | _all                  | limit export to specific field(s) add as many `-f` as you need |
 | `   --fields`  |                       | define a comma separated list of fields to export (overrides `-f`) |
 | `-o --outfile` | output.csv            | name of output file |
 | `-r --rawquery`|                       | optional raw ElasticSearch query JSON string |
+| `-s --start`   |                       | optional start date - Format: YYYY-MM-DDThh:mm:ss.SSSZ. or any other Elasticsearch default format |
+| `-e --end`     |                       | optional end date - Format: YYYY-MM-DDThh:mm:ss.SSSZ. or any other Elasticsearch default format |
+| `--timefield`  |                       | optional time field to use, default to timestamp |
 
-## TODO
-
-Right now you can only export time ranges by index name. To make this more fine grained there need to be added flags for start and stop time. 

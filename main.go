@@ -25,11 +25,14 @@ func main() {
 	app.Version("v version", Version)
 
 	var (
-		configElasticURL = app.StringOpt("e eshost", "http://localhost:9200", "ElasticSearch URL")
+		configElasticURL = app.StringOpt("c connect", "http://localhost:9200", "ElasticSearch URL")
 		configIndex      = app.StringOpt("i index", "logs-*", "ElasticSearch Index (or Index Prefix)")
 		configRawQuery   = app.StringOpt("r rawquery", "", "ElasticSearch Raw Querystring")
 		configQuery      = app.StringOpt("q query", "*", "Lucene Query like in Kibana search input")
 		configOutfile    = app.StringOpt("o outfile", "output.csv", "Filepath for CSV output")
+		configStartdate  = app.StringOpt("e start", "", "Start date for documents to include")
+		configEnddate    = app.StringOpt("e end", "", "End date for documents to include")
+		configTimefield  = app.StringOpt("timefield", "timestamp", "Field name to use for start and end date query")
 		configFieldlist  = app.StringOpt("fields", "", "Fields to include in export as comma separated list")
 		configFields     = app.StringsOpt("f field", nil, "Field to include in export, can be added multiple for every field")
 	)
@@ -60,14 +63,35 @@ func main() {
 
 		g, ctx := errgroup.WithContext(context.Background())
 
-		var esQuery elastic.Query
-		if *configRawQuery != "" {
-			esQuery = elastic.NewRawStringQuery(*configRawQuery)
-		} else if *configQuery != "" {
-			esQuery = elastic.NewQueryStringQuery(*configQuery)
+		var rangeQuery *elastic.RangeQuery
+
+		esQuery := elastic.NewBoolQuery()
+
+		if *configStartdate != "" && *configEnddate != "" {
+			rangeQuery = elastic.NewRangeQuery(*configTimefield).Gte(*configStartdate).Lte(*configEnddate)
+		} else if *configStartdate != "" {
+			rangeQuery = elastic.NewRangeQuery(*configTimefield).Gte(*configStartdate)
+		} else if *configEnddate != "" {
+			rangeQuery = elastic.NewRangeQuery(*configTimefield).Lte(*configEnddate)
 		} else {
-			esQuery = elastic.NewMatchAllQuery()
+			rangeQuery = nil
 		}
+
+		if rangeQuery != nil {
+			esQuery = esQuery.Filter(rangeQuery)
+		}
+
+		if *configRawQuery != "" {
+			esQuery = esQuery.Must(elastic.NewRawStringQuery(*configRawQuery))
+		} else if *configQuery != "" {
+			esQuery = esQuery.Must(elastic.NewQueryStringQuery(*configQuery))
+		} else {
+			esQuery = esQuery.Must(elastic.NewMatchAllQuery())
+		}
+
+		source, _ := esQuery.Source()
+		data, _ := json.Marshal(source)
+		fmt.Println(string(data))
 
 		// Count total and setup progress
 		total, err := client.Count(*configIndex).Query(esQuery).Do(ctx)
