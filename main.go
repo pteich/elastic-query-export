@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -32,7 +33,8 @@ func main() {
 		configOutfile    = app.StringOpt("o outfile", "output.csv", "Filepath for CSV output")
 		configStartdate  = app.StringOpt("e start", "", "Start date for documents to include")
 		configEnddate    = app.StringOpt("e end", "", "End date for documents to include")
-		configTimefield  = app.StringOpt("timefield", "timestamp", "Field name to use for start and end date query")
+		configScrollsize = app.IntOpt("size", 1000, "Number of documents that will be returned per shard")
+		configTimefield  = app.StringOpt("timefield", "Timestamp", "Field name to use for start and end date query")
 		configFieldlist  = app.StringOpt("fields", "", "Fields to include in export as comma separated list")
 		configFields     = app.StringsOpt("f field", nil, "Field to include in export, can be added multiple for every field")
 	)
@@ -105,7 +107,7 @@ func main() {
 		g.Go(func() error {
 			defer close(hits)
 
-			scroll := client.Scroll(*configIndex).Size(100).Query(esQuery)
+			scroll := client.Scroll(*configIndex).Size(*configScrollsize).Query(esQuery)
 
 			// include selected fields otherwise export all
 			if *configFields != nil {
@@ -140,7 +142,7 @@ func main() {
 		})
 
 		// goroutine outside of the errgroup to receive csv outputs from csvout channel and write to file
-		csvout := make(chan []string, 5)
+		csvout := make(chan []string, 8)
 		go func() {
 
 			w := csv.NewWriter(outfile)
@@ -167,20 +169,31 @@ func main() {
 		}()
 
 		// some more goroutines in the errgroup context to do the transformation, room to add more work here in future
-		for i := 0; i < 5; i++ {
+		for i := 0; i < 8; i++ {
 			g.Go(func() error {
 				var document map[string]interface{}
 
 				for hit := range hits {
 
 					var csvdata []string
+					var outdata string
 
 					if err := json.Unmarshal(hit, &document); err != nil {
 						log.Printf("Error unmarshal JSON from ElasticSearch - %v", err)
 					}
 
 					for _, field := range *configFields {
-						csvdata = append(csvdata, fmt.Sprintf("%v", document[field]))
+
+						switch reflect.TypeOf(document[field]).String() {
+						case "int64":
+							outdata = fmt.Sprintf("%d", document[field])
+						case "float64":
+							outdata = fmt.Sprintf("%f", document[field])
+						default:
+							outdata = fmt.Sprintf("%v", document[field])
+						}
+
+						csvdata = append(csvdata, outdata)
 					}
 
 					// send string array to csv output
