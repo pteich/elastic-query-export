@@ -2,3 +2,5 @@
 *.csv
 vendor
 bin
+dist
+.goreleaser.yml
