@@ -1,7 +1,7 @@
 # elastic-query-export
 
 Export Data from ElasticSearch to CSV by Raw or Lucene Query (e.g. from Kibana).
-Works with ElasticSearch 5.x and makes use of ElasticSearch's Scroll API and Go's
+Works with ElasticSearch 6+ (older version should work too) and makes use of ElasticSearch's Scroll API and Go's
 concurrency possibilities to work really fast.
 
 ## Install

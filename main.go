@@ -21,7 +21,6 @@ import (
 var Version string
 
 func main() {
-
 	app := cli.App("elastic-query-export", "CLI tool to export data from ElasticSearch into a CSV file. https://github.com/pteich/elastic-query-export")
 	app.Version("v version", Version)
 
