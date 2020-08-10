@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"regexp"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -14,11 +15,16 @@ import (
 
 	"github.com/cheggaaa/pb"
 	"github.com/jawher/mow.cli"
-	"github.com/olivere/elastic"
+	"github.com/olivere/elastic/v7"
 	"golang.org/x/sync/errgroup"
 )
 
 var Version string
+
+func removeLBR(text string) string {
+    re := regexp.MustCompile(`\x{000D}\x{000A}|[\x{000A}\x{000B}\x{000C}\x{000D}\x{0085}\x{2028}\x{2029}]`)
+    return re.ReplaceAllString(text, ``)
+}
 
 func main() {
 	app := cli.App("elastic-query-export", "CLI tool to export data from ElasticSearch into a CSV file. https://github.com/pteich/elastic-query-export")
@@ -30,7 +36,7 @@ func main() {
 		configRawQuery   = app.StringOpt("r rawquery", "", "ElasticSearch Raw Querystring")
 		configQuery      = app.StringOpt("q query", "*", "Lucene Query like in Kibana search input")
 		configOutfile    = app.StringOpt("o outfile", "output.csv", "Filepath for CSV output")
-		configStartdate  = app.StringOpt("e start", "", "Start date for documents to include")
+		configStartdate  = app.StringOpt("s start", "", "Start date for documents to include")
 		configEnddate    = app.StringOpt("e end", "", "End date for documents to include")
 		configScrollsize = app.IntOpt("size", 1000, "Number of documents that will be returned per shard")
 		configTimefield  = app.StringOpt("timefield", "Timestamp", "Field name to use for start and end date query")
@@ -128,7 +134,7 @@ func main() {
 
 				// Send the hits to the hits channel
 				for _, hit := range results.Hits.Hits {
-					hits <- *hit.Source
+					hits <- hit.Source
 				}
 
 				// Check if we need to terminate early
@@ -182,17 +188,23 @@ func main() {
 					}
 
 					for _, field := range *configFields {
+						if val, ok := document[field]; ok {
+						    //do something here
+								if val != nil {
 
-						switch reflect.TypeOf(document[field]).String() {
-						case "int64":
-							outdata = fmt.Sprintf("%d", document[field])
-						case "float64":
-							outdata = fmt.Sprintf("%f", document[field])
-						default:
-							outdata = fmt.Sprintf("%v", document[field])
+									switch reflect.TypeOf(val).String() {
+									case "int64":
+										outdata = fmt.Sprintf("%d", val)
+									case "float64":
+										outdata = fmt.Sprintf("%f", val)
+									default:
+										outdata = removeLBR(fmt.Sprintf("%v", val))
+									}
+								} else {
+									outdata = ""
+								}
+								csvdata = append(csvdata, outdata)
 						}
-
-						csvdata = append(csvdata, outdata)
 					}
 
 					// send string array to csv output
