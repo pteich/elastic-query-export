@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
-	"regexp"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"os"
-	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -22,8 +21,8 @@ import (
 var Version string
 
 func removeLBR(text string) string {
-    re := regexp.MustCompile(`\x{000D}\x{000A}|[\x{000A}\x{000B}\x{000C}\x{000D}\x{0085}\x{2028}\x{2029}]`)
-    return re.ReplaceAllString(text, ``)
+	re := regexp.MustCompile(`\x{000D}\x{000A}|[\x{000A}\x{000B}\x{000C}\x{000D}\x{0085}\x{2028}\x{2029}]`)
+	return re.ReplaceAllString(text, ``)
 }
 
 func main() {
@@ -45,7 +44,6 @@ func main() {
 	)
 
 	app.Action = func() {
-
 		client, err := elastic.NewClient(
 			elastic.SetURL(*configElasticURL),
 			elastic.SetSniff(false),
@@ -149,7 +147,6 @@ func main() {
 		// goroutine outside of the errgroup to receive csv outputs from csvout channel and write to file
 		csvout := make(chan []string, 8)
 		go func() {
-
 			w := csv.NewWriter(outfile)
 
 			var csvheader []string
@@ -161,13 +158,11 @@ func main() {
 			}
 
 			for csvdata := range csvout {
-
 				if err := w.Write(csvdata); err != nil {
 					log.Printf("Error writing CSV data - %v", err)
 				}
 
 				w.Flush()
-
 				bar.Increment()
 			}
 
@@ -179,7 +174,6 @@ func main() {
 				var document map[string]interface{}
 
 				for hit := range hits {
-
 					var csvdata []string
 					var outdata string
 
@@ -189,21 +183,20 @@ func main() {
 
 					for _, field := range *configFields {
 						if val, ok := document[field]; ok {
-						    //do something here
-								if val != nil {
+							if val == nil {
+								continue
+							}
 
-									switch reflect.TypeOf(val).String() {
-									case "int64":
-										outdata = fmt.Sprintf("%d", val)
-									case "float64":
-										outdata = fmt.Sprintf("%f", val)
-									default:
-										outdata = removeLBR(fmt.Sprintf("%v", val))
-									}
-								} else {
-									outdata = ""
-								}
-								csvdata = append(csvdata, outdata)
+							switch val.(type) {
+							case int64:
+								outdata = fmt.Sprintf("%d", val)
+							case float64:
+								outdata = fmt.Sprintf("%f", val)
+							default:
+								outdata = removeLBR(fmt.Sprintf("%v", val))
+							}
+
+							csvdata = append(csvdata, outdata)
 						}
 					}
 
