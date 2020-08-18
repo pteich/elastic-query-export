@@ -187,11 +187,12 @@ func main() {
 								continue
 							}
 
+							// this type switch is probably not really needed anymore
 							switch val.(type) {
 							case int64:
-								outdata = fmt.Sprintf("%d", val)
+								outdata = fmt.Sprintf("%v", val)
 							case float64:
-								outdata = fmt.Sprintf("%f", val)
+								outdata = fmt.Sprintf("%v", val)
 							default:
 								outdata = removeLBR(fmt.Sprintf("%v", val))
 							}
