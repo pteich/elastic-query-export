@@ -9,7 +9,7 @@ require (
 	github.com/mailru/easyjson v0.7.1 // indirect
 	github.com/mattn/go-colorable v0.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
-	github.com/olivere/elastic v6.2.33+incompatible
+	github.com/olivere/elastic v6.2.33+incompatible // indirect
 	github.com/olivere/elastic/v7 v7.0.19
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.6.1 // indirect

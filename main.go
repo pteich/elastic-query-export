@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/cheggaaa/pb"
-	"github.com/jawher/mow.cli"
+	cli "github.com/jawher/mow.cli"
 	"github.com/olivere/elastic/v7"
 	"golang.org/x/sync/errgroup"
 )
@@ -184,20 +184,30 @@ func main() {
 					for _, field := range *configFields {
 						if val, ok := document[field]; ok {
 							if val == nil {
+								csvdata = append(csvdata, "")
 								continue
 							}
 
 							// this type switch is probably not really needed anymore
 							switch val.(type) {
 							case int64:
-								outdata = fmt.Sprintf("%v", val)
+								outdata = fmt.Sprintf("%d", val)
 							case float64:
-								outdata = fmt.Sprintf("%v", val)
+								f := val.(float64)
+								d := int(f)
+								if f == float64(d) {
+									outdata = fmt.Sprintf("%d", d)
+								} else {
+									outdata = fmt.Sprintf("%f", f)
+								}
+
 							default:
 								outdata = removeLBR(fmt.Sprintf("%v", val))
 							}
 
 							csvdata = append(csvdata, outdata)
+						} else {
+							csvdata = append(csvdata, "")
 						}
 					}
 
