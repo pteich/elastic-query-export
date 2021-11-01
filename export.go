@@ -40,8 +40,7 @@ func export(ctx context.Context, conf *Flags) {
 
 	client, err := elastic.NewClient(esOpts...)
 	if err != nil {
-		log.Printf("Error connecting to ElasticSearch %s - %v", conf.ElasticURL, err)
-		os.Exit(1)
+		log.Fatalf("Error connecting to ElasticSearch %s - %v", conf.ElasticURL, err)
 	}
 	defer client.Stop()
 
@@ -51,7 +50,7 @@ func export(ctx context.Context, conf *Flags) {
 
 	outfile, err := os.Create(conf.Outfile)
 	if err != nil {
-		log.Printf("Error creating output file - %v", err)
+		log.Fatalf("Error creating output file - %s", err)
 	}
 	defer outfile.Close()
 
@@ -83,9 +82,11 @@ func export(ctx context.Context, conf *Flags) {
 		esQuery = esQuery.Must(elastic.NewMatchAllQuery())
 	}
 
-	source, _ := esQuery.Source()
-	data, _ := json.Marshal(source)
-	fmt.Println(string(data))
+	/*
+		source, _ := esQuery.Source()
+		data, _ := json.Marshal(source)
+		fmt.Println(string(data))
+	*/
 
 	// Count total and setup progress
 	total, err := client.Count(conf.Index).Query(esQuery).Do(ctx)
@@ -208,7 +209,6 @@ func export(ctx context.Context, conf *Flags) {
 						outdata = removeLBR(fmt.Sprintf("%v", val))
 						csvdata = append(csvdata, outdata)
 					}
-					continue
 				}
 
 				// send string array to csv output
