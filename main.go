@@ -2,235 +2,43 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
-	"encoding/json"
 	"fmt"
-	"io"
-	"log"
 	"os"
-	"regexp"
-	"strings"
-	"time"
+	"os/signal"
+	"syscall"
 
-	"github.com/cheggaaa/pb"
-	cli "github.com/jawher/mow.cli"
-	"github.com/olivere/elastic/v7"
-	"golang.org/x/sync/errgroup"
+	"github.com/pteich/configstruct"
 )
 
 var Version string
 
-func removeLBR(text string) string {
-	re := regexp.MustCompile(`\x{000D}\x{000A}|[\x{000A}\x{000B}\x{000C}\x{000D}\x{0085}\x{2028}\x{2029}]`)
-	return re.ReplaceAllString(text, ``)
-}
-
 func main() {
-	app := cli.App("elastic-query-export", "CLI tool to export data from ElasticSearch into a CSV file. https://github.com/pteich/elastic-query-export")
-	app.Version("v version", Version)
-
-	var (
-		configElasticURL = app.StringOpt("c connect", "http://localhost:9200", "ElasticSearch URL")
-		configIndex      = app.StringOpt("i index", "logs-*", "ElasticSearch Index (or Index Prefix)")
-		configRawQuery   = app.StringOpt("r rawquery", "", "ElasticSearch Raw Querystring")
-		configQuery      = app.StringOpt("q query", "*", "Lucene Query like in Kibana search input")
-		configOutfile    = app.StringOpt("o outfile", "output.csv", "Filepath for CSV output")
-		configStartdate  = app.StringOpt("s start", "", "Start date for documents to include")
-		configEnddate    = app.StringOpt("e end", "", "End date for documents to include")
-		configScrollsize = app.IntOpt("size", 1000, "Number of documents that will be returned per shard")
-		configTimefield  = app.StringOpt("timefield", "Timestamp", "Field name to use for start and end date query")
-		configFieldlist  = app.StringOpt("fields", "", "Fields to include in export as comma separated list")
-		configFields     = app.StringsOpt("f field", nil, "Field to include in export, can be added multiple for every field")
-	)
-
-	app.Action = func() {
-		client, err := elastic.NewClient(
-			elastic.SetURL(*configElasticURL),
-			elastic.SetSniff(false),
-			elastic.SetHealthcheckInterval(60*time.Second),
-			elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
-		)
-		if err != nil {
-			log.Printf("Error connecting to ElasticSearch %s - %v", *configElasticURL, err)
-			os.Exit(1)
-		}
-		defer client.Stop()
-
-		if *configFieldlist != "" {
-			*configFields = strings.Split(*configFieldlist, ",")
-		}
-
-		outfile, err := os.Create(*configOutfile)
-		if err != nil {
-			log.Printf("Error creating output file - %v", err)
-		}
-		defer outfile.Close()
-
-		g, ctx := errgroup.WithContext(context.Background())
-
-		var rangeQuery *elastic.RangeQuery
-
-		esQuery := elastic.NewBoolQuery()
-
-		if *configStartdate != "" && *configEnddate != "" {
-			rangeQuery = elastic.NewRangeQuery(*configTimefield).Gte(*configStartdate).Lte(*configEnddate)
-		} else if *configStartdate != "" {
-			rangeQuery = elastic.NewRangeQuery(*configTimefield).Gte(*configStartdate)
-		} else if *configEnddate != "" {
-			rangeQuery = elastic.NewRangeQuery(*configTimefield).Lte(*configEnddate)
-		} else {
-			rangeQuery = nil
-		}
-
-		if rangeQuery != nil {
-			esQuery = esQuery.Filter(rangeQuery)
-		}
-
-		if *configRawQuery != "" {
-			esQuery = esQuery.Must(elastic.NewRawStringQuery(*configRawQuery))
-		} else if *configQuery != "" {
-			esQuery = esQuery.Must(elastic.NewQueryStringQuery(*configQuery))
-		} else {
-			esQuery = esQuery.Must(elastic.NewMatchAllQuery())
-		}
-
-		source, _ := esQuery.Source()
-		data, _ := json.Marshal(source)
-		fmt.Println(string(data))
-
-		// Count total and setup progress
-		total, err := client.Count(*configIndex).Query(esQuery).Do(ctx)
-		if err != nil {
-			log.Printf("Error counting ElasticSearch documents - %v", err)
-		}
-		bar := pb.StartNew(int(total))
-
-		// one goroutine to receive hits from Elastic and send them to hits channel
-		hits := make(chan json.RawMessage)
-		g.Go(func() error {
-			defer close(hits)
-
-			scroll := client.Scroll(*configIndex).Size(*configScrollsize).Query(esQuery)
-
-			// include selected fields otherwise export all
-			if *configFields != nil {
-				fetchSource := elastic.NewFetchSourceContext(true)
-				for _, field := range *configFields {
-					fetchSource.Include(field)
-				}
-				scroll = scroll.FetchSourceContext(fetchSource)
-			}
-
-			for {
-				results, err := scroll.Do(ctx)
-				if err == io.EOF {
-					return nil // all results retrieved
-				}
-				if err != nil {
-					return err // something went wrong
-				}
-
-				// Send the hits to the hits channel
-				for _, hit := range results.Hits.Hits {
-					hits <- hit.Source
-				}
-
-				// Check if we need to terminate early
-				select {
-				default:
-				case <-ctx.Done():
-					return ctx.Err()
-				}
-			}
-		})
-
-		// goroutine outside of the errgroup to receive csv outputs from csvout channel and write to file
-		csvout := make(chan []string, 8)
-		go func() {
-			w := csv.NewWriter(outfile)
-
-			var csvheader []string
-			for _, field := range *configFields {
-				csvheader = append(csvheader, field)
-			}
-			if err := w.Write(csvheader); err != nil {
-				log.Printf("Error writing CSV header - %v", err)
-			}
-
-			for csvdata := range csvout {
-				if err := w.Write(csvdata); err != nil {
-					log.Printf("Error writing CSV data - %v", err)
-				}
-
-				w.Flush()
-				bar.Increment()
-			}
-
-		}()
-
-		// some more goroutines in the errgroup context to do the transformation, room to add more work here in future
-		for i := 0; i < 8; i++ {
-			g.Go(func() error {
-				var document map[string]interface{}
-
-				for hit := range hits {
-					var csvdata []string
-					var outdata string
-
-					if err := json.Unmarshal(hit, &document); err != nil {
-						log.Printf("Error unmarshal JSON from ElasticSearch - %v", err)
-					}
-
-					for _, field := range *configFields {
-						if val, ok := document[field]; ok {
-							if val == nil {
-								csvdata = append(csvdata, "")
-								continue
-							}
-
-							// this type switch is probably not really needed anymore
-							switch val.(type) {
-							case int64:
-								outdata = fmt.Sprintf("%d", val)
-							case float64:
-								f := val.(float64)
-								d := int(f)
-								if f == float64(d) {
-									outdata = fmt.Sprintf("%d", d)
-								} else {
-									outdata = fmt.Sprintf("%f", f)
-								}
-
-							default:
-								outdata = removeLBR(fmt.Sprintf("%v", val))
-							}
-
-							csvdata = append(csvdata, outdata)
-						} else {
-							csvdata = append(csvdata, "")
-						}
-					}
-
-					// send string array to csv output
-					csvout <- csvdata
-
-					select {
-					default:
-					case <-ctx.Done():
-						return ctx.Err()
-					}
-				}
-				return nil
-			})
-		}
-
-		// Check if any goroutines failed.
-		if err := g.Wait(); err != nil {
-			log.Printf("Error - %v", err)
-		}
-
-		bar.Finish()
+	flags := Flags{
+		ElasticURL:       "http://localhost:9200",
+		ElasticVerifySSL: true,
+		Index:            "logs-*",
+		Query:            "*",
+		Outfile:          "output.csv",
+		ScrollSize:       1000,
+		Timefield:        "@timestamp",
 	}
 
-	app.Run(os.Args)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGKILL, syscall.SIGTERM, syscall.SIGINT)
+	defer cancel()
+
+	cmd := configstruct.NewCommand(
+		"",
+		"CLI tool to export data from ElasticSearch into a CSV file. https://github.com/pteich/elastic-query-export",
+		&flags,
+		func(c *configstruct.Command, cfg interface{}) error {
+			export(ctx, cfg.(*Flags))
+			return nil
+		},
+	)
+
+	err := cmd.ParseAndRun(os.Args)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
