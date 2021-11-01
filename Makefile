@@ -1,5 +1,5 @@
 BINARY=es-query-csv
-VERSION=1.1.1
+VERSION=1.3.0
 BUILD_TIME=`date +%FT%T%z`
 GOX_OSARCH="darwin/amd64 linux/386 linux/amd64 windows/386 windows/amd64"
 
