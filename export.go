@@ -40,7 +40,7 @@ func export(ctx context.Context, conf *Flags) {
 
 	client, err := elastic.NewClient(esOpts...)
 	if err != nil {
-		log.Fatalf("Error connecting to ElasticSearch %s - %v", conf.ElasticURL, err)
+		log.Fatalf("Error connecting to ElasticSearch: %s", err)
 	}
 	defer client.Stop()
 
