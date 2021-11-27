@@ -26,6 +26,7 @@ es-query-export -c "http://localhost:9200" -i "logstash-*" --startdate="2019-04-
 | `-q --query`   |                       | Lucene query to match documents (same as in Kibana) |
 | `   --fields`  |                       | define a comma separated list of fields to export |
 | `-o --outfile` | output.csv            | name of output file |
+| `-f --outformat` | csv            | format of the output one of csv or json, in case of json every line contains a signle hit |
 | `-r --rawquery`|                       | optional raw ElasticSearch query JSON string |
 | `-s --start`   |                       | optional start date - Format: YYYY-MM-DDThh:mm:ss.SSSZ. or any other Elasticsearch default format |
 | `-e --end`     |                       | optional end date - Format: YYYY-MM-DDThh:mm:ss.SSSZ. or any other Elasticsearch default format |
