@@ -8,16 +8,20 @@ import (
 	"syscall"
 
 	"github.com/pteich/configstruct"
+
+	"github.com/pteich/elastic-query-export/export"
+	"github.com/pteich/elastic-query-export/flags"
 )
 
 var Version string
 
 func main() {
-	flags := Flags{
+	conf := flags.Flags{
 		ElasticURL:       "http://localhost:9200",
 		ElasticVerifySSL: true,
 		Index:            "logs-*",
 		Query:            "*",
+		OutFormat:        flags.FormatCSV,
 		Outfile:          "output.csv",
 		ScrollSize:       1000,
 		Timefield:        "@timestamp",
@@ -28,10 +32,10 @@ func main() {
 
 	cmd := configstruct.NewCommand(
 		"",
-		"CLI tool to export data from ElasticSearch into a CSV file. https://github.com/pteich/elastic-query-export",
-		&flags,
+		"CLI tool to export data from ElasticSearch into a CSV or JSON file. https://github.com/pteich/elastic-query-export",
+		&conf,
 		func(c *configstruct.Command, cfg interface{}) error {
-			export(ctx, cfg.(*Flags))
+			export.Run(ctx, cfg.(*flags.Flags))
 			return nil
 		},
 	)
