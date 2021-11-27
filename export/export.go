@@ -3,7 +3,6 @@ package export
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -22,7 +21,7 @@ const workers = 8
 
 // Formatter defines how an output formatter has to look like
 type Formatter interface {
-	Run(context.Context, <-chan json.RawMessage) error
+	Run(context.Context, <-chan *elastic.SearchHit) error
 }
 
 // Run starts the export of Elastic data
@@ -97,7 +96,7 @@ func Run(ctx context.Context, conf *flags.Flags) {
 	}
 	bar := pb.StartNew(int(total))
 
-	hits := make(chan json.RawMessage)
+	hits := make(chan *elastic.SearchHit)
 
 	go func() {
 		defer close(hits)
@@ -128,7 +127,7 @@ func Run(ctx context.Context, conf *flags.Flags) {
 			for _, hit := range results.Hits.Hits {
 				// Check if we need to terminate early
 				select {
-				case hits <- hit.Source:
+				case hits <- hit:
 				case <-exportCtx.Done():
 					return
 				}
@@ -137,9 +136,18 @@ func Run(ctx context.Context, conf *flags.Flags) {
 	}()
 
 	var output Formatter
-	if conf.OutFormat == flags.FormatJSON {
-
-	} else {
+	switch conf.OutFormat {
+	case flags.FormatJSON:
+		output = formats.JSON{
+			Outfile:    outfile,
+			ProgessBar: bar,
+		}
+	case flags.FormatRAW:
+		output = formats.Raw{
+			Outfile:    outfile,
+			ProgessBar: bar,
+		}
+	default:
 		output = formats.CSV{
 			Conf:       conf,
 			Outfile:    outfile,

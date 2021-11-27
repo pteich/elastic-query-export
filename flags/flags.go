@@ -3,6 +3,7 @@ package flags
 const (
 	FormatCSV  = "csv"
 	FormatJSON = "json"
+	FormatRAW  = "raw"
 )
 
 type Flags struct {
@@ -19,6 +20,6 @@ type Flags struct {
 	EndDate          string `cli:"end" cliAlt:"e" usage:"End date for included documents"`
 	ScrollSize       int    `cli:"size" usage:"Number of documents that will be returned per shard"`
 	Timefield        string `cli:"timefield" usage:"Field name to use for start and end date query"`
-	Fieldlist        string `cli:"Fields" usage:"Fields to include in export as comma separated list"`
+	Fieldlist        string `cli:"fields" usage:"Fields to include in export as comma separated list"`
 	Fields           []string
 }

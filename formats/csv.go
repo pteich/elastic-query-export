@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/olivere/elastic/v7"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/cheggaaa/pb.v2"
 
@@ -22,7 +23,7 @@ type CSV struct {
 	ProgessBar *pb.ProgressBar
 }
 
-func (c CSV) Run(ctx context.Context, hits <-chan json.RawMessage) error {
+func (c CSV) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
 	g, ctx := errgroup.WithContext(ctx)
 
 	csvout := make(chan []string, c.Workers)
@@ -58,7 +59,7 @@ func (c CSV) Run(ctx context.Context, hits <-chan json.RawMessage) error {
 				var csvdata []string
 				var outdata string
 
-				if err := json.Unmarshal(hit, &document); err != nil {
+				if err := json.Unmarshal(hit.Source, &document); err != nil {
 					log.Printf("Error unmarshal JSON from ElasticSearch - %v", err)
 				}
 
