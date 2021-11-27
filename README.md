@@ -26,6 +26,7 @@ es-query-export -c "http://localhost:9200" -i "logstash-*" --startdate="2019-04-
 | `-q --query`   |                       | Lucene query to match documents (same as in Kibana) |
 | `   --fields`  |                       | define a comma separated list of fields to export |
 | `-o --outfile` | output.csv            | name of output file |
+| `-f --outformat` | csv            | format of the output data: possible values csv, json, raw |
 | `-r --rawquery`|                       | optional raw ElasticSearch query JSON string |
 | `-s --start`   |                       | optional start date - Format: YYYY-MM-DDThh:mm:ss.SSSZ. or any other Elasticsearch default format |
 | `-e --end`     |                       | optional end date - Format: YYYY-MM-DDThh:mm:ss.SSSZ. or any other Elasticsearch default format |
@@ -33,3 +34,9 @@ es-query-export -c "http://localhost:9200" -i "logstash-*" --startdate="2019-04-
 | `--verifySSL`  | true                  | optional define how to handle SSL certificates |
 | `--user`       |                       | optional username |
 | `--pass`       |                       | optional password |
+
+## Output Formats
+
+- `csv` - all or selected fields separated by comma (,)
+- `json` - all or selected fields as JSON objects, one per line
+- `raw` - JSON dump of matching documents including id, index and _source field containing the document data. One document as JSON object per line.
