@@ -34,6 +34,7 @@ es-query-export -c "http://localhost:9200" -i "logstash-*" --startdate="2019-04-
 | `--verifySSL`  | true                  | optional define how to handle SSL certificates |
 | `--user`       |                       | optional username |
 | `--pass`       |                       | optional password |
+| `--size`       | 1000                  | size of the scroll window, the more the faster the export works but it adds more pressure on your nodes |
 
 ## Output Formats
 
