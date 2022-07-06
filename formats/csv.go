@@ -82,7 +82,6 @@ func (c CSV) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
 								} else {
 									outdata = fmt.Sprintf("%f", val)
 								}
-
 							default:
 								outdata = removeLBR(fmt.Sprintf("%v", val))
 							}
