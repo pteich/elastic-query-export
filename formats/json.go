@@ -15,13 +15,16 @@ type JSON struct {
 }
 
 func (j JSON) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
-	for {
+	for hit := range hits {
+		fmt.Fprintln(j.Outfile, string(hit.Source))
+		j.ProgessBar.Increment()
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case hit := <-hits:
-			fmt.Fprintln(j.Outfile, string(hit.Source))
-			j.ProgessBar.Increment()
+		default:
 		}
 	}
+
+	return nil
 }
