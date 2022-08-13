@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sync"
 
 	"github.com/olivere/elastic/v7"
 	"golang.org/x/sync/errgroup"
@@ -32,14 +33,6 @@ func (c CSV) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
 	go func() {
 		w := csv.NewWriter(c.Outfile)
 
-		var csvheader []string
-		if c.Conf.Fields != nil {
-			csvheader = append(csvheader, c.Conf.Fields...)
-			if err := w.Write(csvheader); err != nil {
-				log.Printf("Error writing CSV header - %v", err)
-			}
-		}
-
 		for csvdata := range csvout {
 			if err := w.Write(csvdata); err != nil {
 				log.Printf("Error writing CSV data - %v", err)
@@ -50,6 +43,10 @@ func (c CSV) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
 		}
 
 	}()
+
+	sendHeader := sync.Once{}
+	fields := c.Conf.Fields
+	headerSent := make(chan struct{})
 
 	for i := 0; i < c.Workers; i++ {
 		g.Go(func() error {
@@ -63,39 +60,43 @@ func (c CSV) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
 					log.Printf("Error unmarshal JSON from ElasticSearch - %v", err)
 				}
 
-				if c.Conf.Fields != nil {
-					for _, field := range c.Conf.Fields {
-						if val, ok := document[field]; ok {
-							if val == nil {
-								csvdata = append(csvdata, "")
-								continue
-							}
-
-							// this type switch is probably not really needed anymore
-							switch val := val.(type) {
-							case int64:
-								outdata = fmt.Sprintf("%d", val)
-							case float64:
-								d := int(val)
-								if val == float64(d) {
-									outdata = fmt.Sprintf("%d", d)
-								} else {
-									outdata = fmt.Sprintf("%f", val)
-								}
-							default:
-								outdata = removeLBR(fmt.Sprintf("%v", val))
-							}
-
-							csvdata = append(csvdata, outdata)
-						} else {
-							csvdata = append(csvdata, "")
+				sendHeader.Do(func() {
+					if c.Conf.Fields == nil {
+						for key := range document {
+							fields = append(fields, key)
 						}
 					}
+					csvout <- fields
+					close(headerSent)
+				})
 
-				} else {
-					for _, val := range document {
-						outdata = removeLBR(fmt.Sprintf("%v", val))
+				<-headerSent
+
+				for _, field := range fields {
+					if val, ok := document[field]; ok {
+						if val == nil {
+							csvdata = append(csvdata, "")
+							continue
+						}
+
+						// this type switch is probably not really needed anymore
+						switch val := val.(type) {
+						case int64:
+							outdata = fmt.Sprintf("%d", val)
+						case float64:
+							d := int(val)
+							if val == float64(d) {
+								outdata = fmt.Sprintf("%d", d)
+							} else {
+								outdata = fmt.Sprintf("%f", val)
+							}
+						default:
+							outdata = removeLBR(fmt.Sprintf("%v", val))
+						}
+
 						csvdata = append(csvdata, outdata)
+					} else {
+						csvdata = append(csvdata, "")
 					}
 				}
 
