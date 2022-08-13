@@ -43,6 +43,10 @@ func Run(ctx context.Context, conf *flags.Flags) {
 		elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
 	)
 
+	if conf.Trace {
+		esOpts = append(esOpts, elastic.SetTraceLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)))
+	}
+
 	if conf.ElasticUser != "" && conf.ElasticPass != "" {
 		esOpts = append(esOpts, elastic.SetBasicAuth(conf.ElasticUser, conf.ElasticPass))
 	}

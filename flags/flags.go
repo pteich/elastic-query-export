@@ -21,5 +21,6 @@ type Flags struct {
 	ScrollSize       int    `cli:"size" usage:"Number of documents that will be returned per shard"`
 	Timefield        string `cli:"timefield" usage:"Field name to use for start and end date query"`
 	Fieldlist        string `cli:"fields" usage:"Fields to include in export as comma separated list"`
+	Trace            bool   `cli:"trace" usage:"Enable debug output"`
 	Fields           []string
 }
