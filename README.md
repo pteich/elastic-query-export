@@ -12,7 +12,7 @@ You need just this binary. It works on OSX (Darwin), Linux and Windows.
 ## Usage
 
 ````bash
-es-query-export -c "http://localhost:9200" -i "logstash-*" --startdate="2019-04-04T12:15:00" --fields="RemoteHost,RequestTime,Timestamp,RequestUri,RequestProtocol,Agent" -q "RequestUri:*export*"
+es-query-export -c "http://localhost:9200" -i "logstash-*" --start="2019-04-04T12:15:00" --fields="RemoteHost,RequestTime,Timestamp,RequestUri,RequestProtocol,Agent" -q "RequestUri:*export*"
 ````
 
 ## CLI Options
