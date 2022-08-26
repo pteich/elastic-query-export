@@ -60,6 +60,8 @@ func (c CSV) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
 					log.Printf("Error unmarshal JSON from ElasticSearch - %v", err)
 				}
 
+				document = flatten(document)
+
 				sendHeader.Do(func() {
 					if c.Conf.Fields == nil {
 						for key := range document {
@@ -114,6 +116,25 @@ func (c CSV) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
 	}
 
 	return g.Wait()
+}
+
+func flatten(document map[string]interface{}) map[string]interface{} {
+	result := map[string]interface{}{}
+
+	for key, value := range document {
+		result[key] = value
+
+		childDocument, ok := value.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		for subKey, subValue := range flatten(childDocument) {
+			result[key+"."+subKey] = subValue
+		}
+	}
+
+	return result
 }
 
 func removeLBR(text string) string {
