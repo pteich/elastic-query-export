@@ -50,9 +50,9 @@ func (c CSV) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
 
 	for i := 0; i < c.Workers; i++ {
 		g.Go(func() error {
-			var document map[string]interface{}
 
 			for hit := range hits {
+				var document map[string]interface{}
 				var csvdata []string
 				var outdata string
 
