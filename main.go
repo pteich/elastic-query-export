@@ -18,7 +18,7 @@ var Version string
 func main() {
 	conf := flags.Flags{
 		ElasticURL:       "http://localhost:9200",
-		ElasticVerifySSL: true,
+		ElasticVerifySSL: false,
 		Index:            "logs-*",
 		Query:            "*",
 		OutFormat:        flags.FormatCSV,
