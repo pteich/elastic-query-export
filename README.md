@@ -9,6 +9,12 @@ concurrency possibilities to work as fast as possible.
 Download a pre-compiled binary for your operating system from here: https://github.com/pteich/elastic-query-export/releases
 You need just this binary. It works on OSX (Darwin), Linux and Windows.
 
+### Arch
+
+```bash
+yay -S elastic-query-export-bin
+```
+
 ## Usage
 
 ````bash
