@@ -17,18 +17,15 @@ type Raw struct {
 }
 
 func (r Raw) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case hit := <-hits:
-			data, err := json.Marshal(hit)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			fmt.Fprintln(r.Outfile, string(data))
-			r.ProgessBar.Increment()
+	for hit := range hits {
+		data, err := json.Marshal(hit)
+		if err != nil {
+			log.Println(err)
+			continue
 		}
+		fmt.Fprintln(r.Outfile, string(data))
+		r.ProgessBar.Increment()
 	}
+	// When the hits channel is closed, exit the loop gracefully.
+	return nil
 }
