@@ -94,7 +94,7 @@ func Run(ctx context.Context, conf *flags.Flags) {
 	// Count total and setup progress
 	total, err := client.Count(conf.Index).Query(esQuery).Do(ctx)
 	if err != nil {
-		log.Fatalf("Error counting ElasticSearch documents - %v", err)
+		log.Fatalf("Error counting ElasticSearch documents: %s", err)
 	}
 	bar := pb.StartNew(int(total))
 
