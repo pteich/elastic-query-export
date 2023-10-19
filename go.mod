@@ -1,6 +1,6 @@
 module github.com/pteich/elastic-query-export
 
-go 1.18
+go 1.20
 
 require (
 	github.com/olivere/elastic/v7 v7.0.32
