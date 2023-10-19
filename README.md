@@ -11,13 +11,13 @@ You need just this binary. It works on OSX (Darwin), Linux and Windows.
 
 ### Arch
 
-```bash
+```shell
 yay -S elastic-query-export-bin
 ```
 
-## Usage
+## General usage
 
-````bash
+````shell
 es-query-export -c "http://localhost:9200" -i "logstash-*" --start="2019-04-04T12:15:00" --fields="RemoteHost,RequestTime,Timestamp,RequestUri,RequestProtocol,Agent" -q "RequestUri:*export*"
 ````
 
@@ -48,3 +48,11 @@ es-query-export -c "http://localhost:9200" -i "logstash-*" --start="2019-04-04T1
 - `csv` - all or selected fields separated by comma (,) with field names in the first line 
 - `json` - all or selected fields as JSON objects, one per line
 - `raw` - JSON dump of matching documents including id, index and _source field containing the document data. One document as JSON object per line.
+
+## Pipe output to other commands
+
+Since v1.6.0 you can provide `-` as filename and send output to stdout. This can be used to pipe it to other commands like so:
+
+```shell
+es-query-export -start="2019-04-04T12:15:00" -q "RequestUri:*export*" -outfile - | aws s3 cp - s3://mybucket/stream.csv
+```
