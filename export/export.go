@@ -59,11 +59,17 @@ func Run(ctx context.Context, conf *flags.Flags) {
 		conf.Fields = strings.Split(conf.Fieldlist, ",")
 	}
 
-	outfile, err := os.Create(conf.Outfile)
-	if err != nil {
-		log.Fatalf("Error creating output file - %s", err)
+	var outfile *os.File
+
+	if conf.Outfile == "-" {
+		outfile = os.Stdout
+	} else {
+		outfile, err = os.Create(conf.Outfile)
+		if err != nil {
+			log.Fatalf("Error creating output file - %s", err)
+		}
+		defer outfile.Close()
 	}
-	defer outfile.Close()
 
 	var rangeQuery *elastic.RangeQuery
 
