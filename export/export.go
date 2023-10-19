@@ -3,6 +3,7 @@ package export
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -26,9 +27,6 @@ type Formatter interface {
 
 // Run starts the export of Elastic data
 func Run(ctx context.Context, conf *flags.Flags) {
-	exportCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: !conf.ElasticVerifySSL},
 	}
@@ -96,7 +94,7 @@ func Run(ctx context.Context, conf *flags.Flags) {
 	// Count total and setup progress
 	total, err := client.Count(conf.Index).Query(esQuery).Do(ctx)
 	if err != nil {
-		log.Printf("Error counting ElasticSearch documents - %v", err)
+		log.Fatalf("Error counting ElasticSearch documents - %v", err)
 	}
 	bar := pb.StartNew(int(total))
 
@@ -106,6 +104,7 @@ func Run(ctx context.Context, conf *flags.Flags) {
 		defer close(hits)
 
 		scroll := client.Scroll(conf.Index).Size(conf.ScrollSize).Query(esQuery)
+		defer scroll.Clear(ctx)
 
 		// include selected fields otherwise export all
 		if conf.Fields != nil {
@@ -118,12 +117,12 @@ func Run(ctx context.Context, conf *flags.Flags) {
 
 		for {
 			results, err := scroll.Do(ctx)
-			if err == io.EOF {
-				return // all results retrieved
-			}
 			if err != nil {
+				if errors.Is(err, io.EOF) {
+					return // all results retrieved
+				}
+
 				log.Println(err)
-				cancel()
 				return // something went wrong
 			}
 
@@ -132,7 +131,7 @@ func Run(ctx context.Context, conf *flags.Flags) {
 				// Check if we need to terminate early
 				select {
 				case hits <- hit:
-				case <-exportCtx.Done():
+				case <-ctx.Done():
 					return
 				}
 			}
@@ -160,9 +159,9 @@ func Run(ctx context.Context, conf *flags.Flags) {
 		}
 	}
 
-	err = output.Run(exportCtx, hits)
+	err = output.Run(ctx, hits)
 	if err != nil {
-		log.Println(err)
+		log.Printf("Failed to write output: %s", err)
 	}
 
 	bar.Finish()
