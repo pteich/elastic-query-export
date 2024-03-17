@@ -37,7 +37,7 @@ es-query-export -c "http://localhost:9200" -i "logstash-*" --start="2019-04-04T1
 | `-s --start`     |                       | optional start date - Format: YYYY-MM-DDThh:mm:ss.SSSZ. or any other Elasticsearch default format       |
 | `-e --end`       |                       | optional end date - Format: YYYY-MM-DDThh:mm:ss.SSSZ. or any other Elasticsearch default format         |
 | `--timefield`    |                       | optional time field to use, default to @timestamp                                                       |
-| `--verifySSL`    | true                  | optional define how to handle SSL certificates                                                          |
+| `--verifySSL`    | false                 | optional define how to handle SSL certificates                                                          |
 | `--user`         |                       | optional username                                                                                       |
 | `--pass`         |                       | optional password                                                                                       |
 | `--size`         | 1000                  | size of the scroll window, the more the faster the export works but it adds more pressure on your nodes |
