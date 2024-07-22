@@ -27,7 +27,7 @@ func main() {
 		Timefield:        "@timestamp",
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGKILL, syscall.SIGTERM, syscall.SIGINT)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
 	cmd := configstruct.NewCommand(
