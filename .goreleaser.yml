@@ -19,12 +19,12 @@ builds:
       - arm64
 
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+      - goos: darwin
+        format: zip
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -35,8 +35,8 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-fpm:
-  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+nfpms:
+  - file_name_template: "{{ .ConventionalFileName }}"
     formats:
       - deb
       - rpm
