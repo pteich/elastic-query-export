@@ -1,4 +1,5 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
 before:
   hooks:
     # You may remove this if you don't use go modules.
@@ -16,6 +17,7 @@ builds:
     goarch:
       - amd64
       - arm64
+
 archives:
   - replacements:
       darwin: Darwin
@@ -47,6 +49,7 @@ fpm:
     homepage: "https://github.com/pteich"
     description: "Export Data from ElasticSearch to CSV/JSON using a Lucene Query (e.g. from Kibana) or a raw JSON Query string"
     license: "MIT"
+
 release:
   draft: true
   replace_existing_draft: true
