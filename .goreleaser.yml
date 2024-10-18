@@ -1,0 +1,93 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+universal_binaries:
+  - replace: true
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+      - freebsd
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.Date={{.CommitDate}}
+
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+      - goos: darwin
+        format: zip
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - typo
+      - Goreleaser
+      - Dockerfile
+      - CI
+      - '^test:'
+
+sboms:
+  - artifacts: archive
+
+nfpms:
+  - file_name_template: "{{ .ConventionalFileName }}"
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    dependencies:
+      - "bash"
+    maintainer: "Peter Teich <mail@peter-teich.de>"
+    vendor: "Peter Teich"
+    homepage: "https://github.com/pteich"
+    description: "Export Data from ElasticSearch to CSV/JSON using a Lucene Query (e.g. from Kibana) or a raw JSON Query string"
+    license: "MIT"
+
+dockers:
+  - image_templates: ["ghcr.io/pteich/elastic-query-export:{{ .Version }}"]
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/pteich/elastic-query-export
+      - --label=org.opencontainers.image.source=https://github.com/pteich/elastic-query-export
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+
+brews:
+  - name: elastic-query-export
+    homepage: https://github.com/pteich
+    repository:
+      owner: pteich
+      name: homebrew-elastic-query-export
+
+release:
+  draft: true
+  replace_existing_draft: true
+  replace_existing_artifacts: true
