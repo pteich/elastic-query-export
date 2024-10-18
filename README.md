@@ -2,14 +2,24 @@
 
 Export Data from ElasticSearch to CSV by Raw or Lucene Query (e.g. from Kibana).
 Works with ElasticSearch 6+ (OpenSearch works too) and makes use of ElasticSearch's Scroll API and Go's
-concurrency possibilities to work as fast as possible.
+concurrency features to work as fast as possible.
 
 ## Install
 
 Download a pre-compiled binary for your operating system from here: https://github.com/pteich/elastic-query-export/releases
 You need just this binary. It works on OSX (Darwin), Linux and Windows.
 
-### Arch
+There are also prebuilt RPM, DEB and APK packages for your Linux distribution.
+
+### Brew
+
+Use Brew to install:
+```shell
+brew tap pteich/tap
+brew install elastic-query-export
+```
+
+### Arch AUR
 
 ```shell
 yay -S elastic-query-export-bin
