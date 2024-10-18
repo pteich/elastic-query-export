@@ -25,6 +25,16 @@ brew install elastic-query-export
 yay -S elastic-query-export-bin
 ```
 
+### Docker
+
+A Docker image is available here: https://github.com/pteich/elastic-query-export/pkgs/container/elastic-query-export
+It can be used just like the locally installed binary: 
+
+```shell
+docker run ghcr.io/pteich/elastic-query-export:1.6.2 -h
+```
+
+
 ## General usage
 
 ````shell
