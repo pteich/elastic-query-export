@@ -27,8 +27,21 @@ type Formatter interface {
 
 // Run starts the export of Elastic data
 func Run(ctx context.Context, conf *flags.Flags) {
+	tlsCfg := &tls.Config{
+		InsecureSkipVerify: !conf.ElasticVerifySSL,
+	}
+
+	if conf.ElasticClientCrt != "" && conf.ElasticClientKey != "" {
+		cert, err := tls.LoadX509KeyPair(conf.ElasticClientCrt, conf.ElasticClientKey)
+		if err != nil {
+			log.Fatalf("Error loading client certificate: %s", err)
+		}
+		tlsCfg.Certificates = []tls.Certificate{cert}
+
+	}
+
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: !conf.ElasticVerifySSL},
+		TLSClientConfig: tlsCfg,
 	}
 	httpClient := &http.Client{Transport: tr}
 
