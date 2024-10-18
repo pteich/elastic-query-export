@@ -30,6 +30,10 @@ jobs:
           password: ${{ secrets.GH_GORELEASER }}
 
       -
+        name: Download Syft
+        uses: anchore/sbom-action/download-syft@v0.17.4
+
+      -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
