@@ -83,10 +83,9 @@ dockers:
 brews:
   - name: elastic-query-export
     homepage: https://github.com/pteich
-    directory: elastic-query-export
     repository:
       owner: pteich
-      name: homebrew-tap
+      name: homebrew-elastic-query-export
 
 release:
   draft: true
