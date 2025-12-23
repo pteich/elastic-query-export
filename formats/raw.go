@@ -7,8 +7,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/olivere/elastic/v7"
 	"gopkg.in/cheggaaa/pb.v2"
+
+	"github.com/pteich/elastic-query-export/elastic"
 )
 
 type Raw struct {
@@ -16,7 +17,7 @@ type Raw struct {
 	ProgessBar *pb.ProgressBar
 }
 
-func (r Raw) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
+func (r Raw) Run(ctx context.Context, hits <-chan elastic.SearchHit) error {
 	for hit := range hits {
 		data, err := json.Marshal(hit)
 		if err != nil {
