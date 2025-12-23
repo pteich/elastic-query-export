@@ -1,6 +1,6 @@
 module github.com/pteich/elastic-query-export
 
-go 1.25
+go 1.24.0
 
 require (
 	github.com/elastic/go-elasticsearch/v8 v8.19.1
