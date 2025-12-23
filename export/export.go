@@ -43,18 +43,18 @@ func (e *elasticClient) Count(ctx context.Context, index string, query any) (int
 		return client.Count(ctx, index, q)
 	case 8:
 		client := e.client.(*elasticv8.Client)
-		qb, ok := query.(*elasticv8.QueryBuilder)
+		q, ok := query.(elasticsearch.Query)
 		if !ok {
 			return 0, errors.New("invalid query type for v8")
 		}
-		return client.Count(ctx, index, qb)
+		return client.Count(ctx, index, q)
 	case 9:
 		client := e.client.(*elasticv9.Client)
-		qb, ok := query.(*elasticv9.QueryBuilder)
+		q, ok := query.(elasticsearch.Query)
 		if !ok {
 			return 0, errors.New("invalid query type for v9")
 		}
-		return client.Count(ctx, index, qb)
+		return client.Count(ctx, index, q)
 	default:
 		return 0, errors.New("unsupported version")
 	}
@@ -71,18 +71,18 @@ func (e *elasticClient) Scroll(index string, size int, query any) any {
 		return client.Scroll(index, size, q)
 	case 8:
 		client := e.client.(*elasticv8.Client)
-		qb, ok := query.(*elasticv8.QueryBuilder)
+		q, ok := query.(elasticsearch.Query)
 		if !ok {
 			return nil
 		}
-		return client.Scroll(index, size, qb)
+		return client.Scroll(index, size, q)
 	case 9:
 		client := e.client.(*elasticv9.Client)
-		qb, ok := query.(*elasticv9.QueryBuilder)
+		q, ok := query.(elasticsearch.Query)
 		if !ok {
 			return nil
 		}
-		return client.Scroll(index, size, qb)
+		return client.Scroll(index, size, q)
 	default:
 		return nil
 	}
@@ -503,11 +503,9 @@ func buildFinalQuery(version int, boolQuery any) any {
 		bq := boolQuery.(*elasticv7import.BoolQuery)
 		return bq
 	case 8:
-		bq := boolQuery.(*elasticv8.BoolQuery)
-		return bq.Build()
+		return boolQuery.(*elasticv8.BoolQuery)
 	case 9:
-		bq := boolQuery.(*elasticv9.BoolQuery)
-		return bq.Build()
+		return boolQuery.(*elasticv9.BoolQuery)
 	default:
 		return nil
 	}

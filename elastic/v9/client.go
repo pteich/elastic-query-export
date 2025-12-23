@@ -56,7 +56,8 @@ func (c *Client) Count(ctx context.Context, index string, query elastic.Query) (
 	if query != nil {
 		queryMap := query.Build()
 		if len(queryMap) > 0 {
-			if err := json.NewEncoder(&buf).Encode(queryMap); err != nil {
+			queryBody := map[string]interface{}{"query": queryMap}
+			if err := json.NewEncoder(&buf).Encode(queryBody); err != nil {
 				return 0, err
 			}
 		}
@@ -103,7 +104,7 @@ func (s *ScrollService) Do(ctx context.Context) (*SearchResult, error) {
 	var err error
 
 	queryBody := make(map[string]interface{})
-	if s.query != nil && len(s.query) > 0 {
+	if len(s.query) > 0 {
 		queryBody["query"] = s.query
 	}
 	if len(s.includeFields) > 0 {
@@ -268,6 +269,11 @@ func (q *BoolQuery) Must(query interface{}) *BoolQuery {
 	if boolQuery["must"] == nil {
 		boolQuery["must"] = []interface{}{}
 	}
+
+	if eq, ok := query.(elastic.Query); ok {
+		query = eq.Build()
+	}
+
 	boolQuery["must"] = append(boolQuery["must"].([]interface{}), query)
 	return q
 }
@@ -280,6 +286,11 @@ func (q *BoolQuery) Filter(query interface{}) *BoolQuery {
 	if boolQuery["filter"] == nil {
 		boolQuery["filter"] = []interface{}{}
 	}
+
+	if eq, ok := query.(elastic.Query); ok {
+		query = eq.Build()
+	}
+
 	boolQuery["filter"] = append(boolQuery["filter"].([]interface{}), query)
 	return q
 }
