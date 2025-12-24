@@ -146,6 +146,8 @@ github.com/testcontainers/testcontainers-go v0.40.0 h1:pSdJYLOVgLE8YdUY2FHQ1Fxu+
 github.com/testcontainers/testcontainers-go v0.40.0/go.mod h1:FSXV5KQtX2HAMlm7U3APNyLkkap35zNLxukw9oBi/MY=
 github.com/testcontainers/testcontainers-go/modules/elasticsearch v0.40.0 h1:ptHRAHNK5SFKcx5T5Yo5cPLXRXVjpSjg6/H2qfLYMWg=
 github.com/testcontainers/testcontainers-go/modules/elasticsearch v0.40.0/go.mod h1:rp0xHnT5inQoHHsMbSO1dQXxHmTb+0kRnDnBbJf9//w=
+github.com/testcontainers/testcontainers-go/modules/opensearch v0.40.0 h1:3TIrGk0zXyO9CG2N6APo7auwWIwAvhkwE1reISif8LM=
+github.com/testcontainers/testcontainers-go/modules/opensearch v0.40.0/go.mod h1:VA0UCTPu+Gcs7MzdzBnSl0qDnxquuphv3ngSGdX97Xs=
 github.com/tklauser/go-sysconf v0.3.12 h1:0QaGUFOdQaIVdPgfITYzaTegZvdCjmYO52cSFAEVmqU=
 github.com/tklauser/go-sysconf v0.3.12/go.mod h1:Ho14jnntGE1fpdOqQEEaiKRpvIavV0hSfmBq8nJbHYI=
 github.com/tklauser/numcpus v0.6.1 h1:ng9scYS7az0Bk4OZLvrNXNSAO2Pxr1XXRAPyjhIx+Fk=

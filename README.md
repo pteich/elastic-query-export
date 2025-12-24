@@ -46,7 +46,7 @@ es-query-export -c "http://localhost:9200" -i "logstash-*" --start="2019-04-04T1
 |------------------|-----------------------|---------------------------------------------------------------------------------------------------------|
 | `-h --help`      |                       | show help                                                                                               |
 | `-v --version`   |                       | show version                                                                                            |
-| `--es-version`    | 7                     | ElasticSearch version (7, 8, or 9) - defaults to 7 for backward compatibility                          |
+| `--es-version`    | 7                     | ElasticSearch version (7, 8, or 9). Omit for OpenSearch (it uses the v7 compatible client). |
 | `-c --connect`   | http://localhost:9200 | URI to ElasticSearch instance                                                                           | 
 | `-i --index`     | logs-*                | name of index to use, use globbing characters * to match multiple                                       |
 | `-q --query`     |                       | Lucene query to match documents (same as in Kibana)                                                     |
@@ -63,18 +63,25 @@ es-query-export -c "http://localhost:9200" -i "logstash-*" --start="2019-04-04T1
 | `--size`         | 1000                  | size of the scroll window, the more the faster the export works but it adds more pressure on your nodes |
 | `--trace`        | false                 | enable trace mode to debug queries send to ElasticSearch                                                |
 
-## Usage:
-For ElasticSearch v7 (default)
+## Usage examples:
+
+### OpenSearch (all versions)
+OpenSearch works using the default version 7 compatibility. You can omit the `--es-version` flag.
 ```bash
 es-query-export -c "http://localhost:9200" -i "logs-*"
 ```
 
-For ElasticSearch v8
+### ElasticSearch v7 (default)
+```bash
+es-query-export -c "http://localhost:9200" -i "logs-*"
+```
+
+### ElasticSearch v8
 ```bash
 es-query-export --es-version 8 -c "http://localhost:9200" -i "logs-*"
 ```
 
-For ElasticSearch v9
+### ElasticSearch v9
 ```bash
 es-query-export --es-version 9 -c "http://localhost:9200" -i "logs-*"
 ```
