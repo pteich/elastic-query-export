@@ -8,9 +8,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pteich/elastic-query-export/flags"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/elasticsearch"
+	"github.com/testcontainers/testcontainers-go/wait"
+
+	"github.com/pteich/elastic-query-export/flags"
 )
 
 func TestExportE2E(t *testing.T) {
@@ -19,38 +21,75 @@ func TestExportE2E(t *testing.T) {
 	}
 
 	tests := []struct {
+		name    string
 		version int
 		image   string
+		isOS    bool
 	}{
-		{version: 7, image: "docker.elastic.co/elasticsearch/elasticsearch:7.17.10"},
-		{version: 8, image: "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"},
-		{version: 9, image: "docker.elastic.co/elasticsearch/elasticsearch:9.2.3"},
+		{name: "Elasticsearch_v7", version: 7, image: "docker.elastic.co/elasticsearch/elasticsearch:7.17.10"},
+		{name: "Elasticsearch_v8", version: 8, image: "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"},
+		{name: "Elasticsearch_v9", version: 9, image: "docker.elastic.co/elasticsearch/elasticsearch:9.2.3"},
+		{name: "OpenSearch_v2", version: 7, image: "opensearchproject/opensearch:2.18.0", isOS: true},
+		{name: "OpenSearch_v3", version: 7, image: "opensearchproject/opensearch:3.4.0", isOS: true},
 	}
 
 	for _, tt := range tests {
-		t.Run(fmt.Sprintf("Elasticsearch_v%d", tt.version), func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			esContainer, err := elasticsearch.Run(ctx, tt.image,
-				testcontainers.CustomizeRequest(testcontainers.GenericContainerRequest{
+			var endpoint string
+			if tt.isOS {
+				c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 					ContainerRequest: testcontainers.ContainerRequest{
+						Image:        tt.image,
+						ExposedPorts: []string{"9200/tcp"},
 						Env: map[string]string{
-							"discovery.type":         "single-node",
-							"xpack.security.enabled": "false",
+							"discovery.type":              "single-node",
+							"DISABLE_SECURITY_PLUGIN":     "true",
+							"DISABLE_INSTALL_DEMO_CONFIG": "true",
 						},
+						WaitingFor: wait.ForHTTP("/").WithPort("9200/tcp"),
 					},
-				}),
-			)
-			if err != nil {
-				t.Fatalf("failed to start container: %s", err)
-			}
-			defer func() {
-				if err := esContainer.Terminate(ctx); err != nil {
-					t.Fatalf("failed to terminate container: %s", err)
+					Started: true,
+				})
+				if err != nil {
+					t.Fatalf("failed to start opensearch container: %s", err)
 				}
-			}()
-
-			endpoint := esContainer.Settings.Address
+				defer func() {
+					if err := c.Terminate(ctx); err != nil {
+						t.Fatalf("failed to terminate container: %s", err)
+					}
+				}()
+				host, err := c.Host(ctx)
+				if err != nil {
+					t.Fatalf("failed to get opensearch host: %s", err)
+				}
+				port, err := c.MappedPort(ctx, "9200/tcp")
+				if err != nil {
+					t.Fatalf("failed to get opensearch port: %s", err)
+				}
+				endpoint = fmt.Sprintf("http://%s:%d", host, port.Int())
+			} else {
+				esContainer, err := elasticsearch.Run(ctx, tt.image,
+					testcontainers.CustomizeRequest(testcontainers.GenericContainerRequest{
+						ContainerRequest: testcontainers.ContainerRequest{
+							Env: map[string]string{
+								"discovery.type":         "single-node",
+								"xpack.security.enabled": "false",
+							},
+						},
+					}),
+				)
+				if err != nil {
+					t.Fatalf("failed to start elasticsearch container: %s", err)
+				}
+				defer func() {
+					if err := esContainer.Terminate(ctx); err != nil {
+						t.Fatalf("failed to terminate container: %s", err)
+					}
+				}()
+				endpoint = esContainer.Settings.Address
+			}
 
 			// Seed data
 			seedData(t, tt.version, endpoint)
