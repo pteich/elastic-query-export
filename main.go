@@ -19,6 +19,7 @@ func main() {
 	conf := flags.Flags{
 		ElasticURL:       "http://localhost:9200",
 		ElasticVerifySSL: false,
+		ElasticVersion:   7,
 		Index:            "logs-*",
 		Query:            "*",
 		OutFormat:        flags.FormatCSV,

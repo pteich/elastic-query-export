@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/olivere/elastic/v7"
 	"gopkg.in/cheggaaa/pb.v2"
+
+	"github.com/pteich/elastic-query-export/elastic"
 )
 
 type JSON struct {
@@ -14,9 +15,9 @@ type JSON struct {
 	ProgessBar *pb.ProgressBar
 }
 
-func (j JSON) Run(ctx context.Context, hits <-chan *elastic.SearchHit) error {
+func (j JSON) Run(ctx context.Context, hits <-chan elastic.SearchHit) error {
 	for hit := range hits {
-		fmt.Fprintln(j.Outfile, string(hit.Source))
+		fmt.Fprintln(j.Outfile, string(hit.GetSource()))
 		j.ProgessBar.Increment()
 
 		select {

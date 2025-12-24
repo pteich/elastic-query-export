@@ -13,6 +13,7 @@ type Flags struct {
 	ElasticVerifySSL bool   `cli:"verifySSL" usage:"Verify SSL certificate"`
 	ElasticClientCrt string `cli:"clientCRT" usage:"Path to client certificate"`
 	ElasticClientKey string `cli:"clientKey" usage:"Path to client certificate key"`
+	ElasticVersion   int    `cli:"es-version" usage:"ElasticSearch version (7, 8, or 9)"`
 	Index            string `cli:"index" cliAlt:"i" usage:"ElasticSearch Index (or Index Prefix)"`
 	RAWQuery         string `cli:"rawquery" cliAlt:"r" usage:"ElasticSearch raw query string"`
 	Query            string `cli:"query" cliAlt:"q" usage:"Lucene query same that is used in Kibana search input"`
