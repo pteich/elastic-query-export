@@ -18,17 +18,17 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X main.version={{.Version}}
-      - -X main.commit={{.ShortCommit}}
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.ShortCommit}}
       - -X main.Date={{.CommitDate}}
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
       - goos: darwin
-        format: zip
+        formats: [zip]
 
 checksum:
   name_template: 'checksums.txt'
@@ -69,6 +69,7 @@ nfpms:
 dockers:
   - image_templates: ["ghcr.io/pteich/elastic-query-export:{{ .Version }}"]
     dockerfile: Dockerfile
+    use: buildx
     build_flag_templates:
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.description={{ .ProjectName }}
