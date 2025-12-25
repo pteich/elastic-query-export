@@ -36,10 +36,11 @@ jobs:
       -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
-        timeout-minutes: 30
+        timeout-minutes: 45
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean
+          args: release --clean -p 1
         env:
           GITHUB_TOKEN: ${{ secrets.GH_GORELEASER }}
+          GOMAXPROCS: 2
