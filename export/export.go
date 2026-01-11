@@ -110,7 +110,7 @@ func (e *Client) GetIndices(ctx context.Context, pattern string) ([]string, erro
 	switch e.version {
 	case 7:
 		client := e.client.(*elasticv7.Client)
-		return client.GetIndices(pattern)
+		return client.GetIndices(ctx, pattern)
 	case 8:
 		client := e.client.(*elasticv8.Client)
 		return client.GetIndices(pattern)

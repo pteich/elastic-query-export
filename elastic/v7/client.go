@@ -141,8 +141,8 @@ func SetBasicAuth(username, password string) elastic.ClientOptionFunc {
 func GetDefaultLogger() *log.Logger {
 	return log.New(os.Stderr, "ELASTIC ", log.LstdFlags)
 }
-func (c *Client) GetIndices(pattern string) ([]string, error) {
-	res, err := c.client.CatIndices().Index(pattern).Columns("index").Do(context.Background())
+func (c *Client) GetIndices(ctx context.Context, pattern string) ([]string, error) {
+	res, err := c.client.CatIndices().Index(pattern).Columns("index").Do(ctx)
 	if err != nil {
 		return nil, err
 	}

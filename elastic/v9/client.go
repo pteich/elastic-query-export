@@ -406,8 +406,9 @@ func (q *QueryBuilder) Build() map[string]interface{} {
 func TrimSpace(s string) string {
 	return strings.TrimSpace(s)
 }
-func (c *Client) GetIndices(pattern string) ([]string, error) {
+func (c *Client) GetIndices(ctx context.Context, pattern string) ([]string, error) {
 	res, err := c.client.Cat.Indices(
+		c.client.Cat.Indices.WithContext(ctx),
 		c.client.Cat.Indices.WithIndex(pattern),
 		c.client.Cat.Indices.WithH("index"),
 		c.client.Cat.Indices.WithFormat("json"),
