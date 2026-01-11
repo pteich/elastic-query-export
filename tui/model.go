@@ -163,17 +163,17 @@ func (m Model) View() string {
 
 	switch m.step {
 	case stepConnection:
-		var b, inputs string
+		var view, inputs string
 
 		for i := range m.inputs {
 			inputs += m.inputs[i].View() + "\n"
 		}
 
-		b = fmt.Sprintf(
+		view = fmt.Sprintf(
 			"Connect to ElasticSearch\n\n%s\n\n[Enter] Connect",
 			inputs,
 		)
-		return b
+		return view
 	case stepIndex:
 		return "Connected! Select Index (TODO)"
 	default:
