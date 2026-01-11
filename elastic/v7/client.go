@@ -146,9 +146,11 @@ func (c *Client) GetIndices(pattern string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var indices []string
+
+	indices := make([]string, 0, len(res))
 	for _, row := range res {
 		indices = append(indices, row.Index)
 	}
+
 	return indices, nil
 }

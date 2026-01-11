@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -414,20 +415,26 @@ func (c *Client) GetIndices(pattern string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer res.Body.Close()
+
 	if res.IsError() {
-		return nil, errors.New(res.String())
+		return nil, fmt.Errorf("error getting indices: %s", res.String())
 	}
+
 	type indexRow struct {
 		Index string `json:"index"`
 	}
+
 	var rows []indexRow
 	if err := json.NewDecoder(res.Body).Decode(&rows); err != nil {
 		return nil, err
 	}
-	var indices []string
+
+	indices := make([]string, 0, len(rows))
 	for _, row := range rows {
 		indices = append(indices, row.Index)
 	}
+
 	return indices, nil
 }
