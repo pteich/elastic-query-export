@@ -25,6 +25,14 @@ brew install elastic-query-export
 yay -S elastic-query-export-bin
 ```
 
+### Scoop
+
+Use Scoop to install on Windows:
+```powershell
+scoop bucket add pteich https://github.com/pteich/scoop-bucket
+scoop install elastic-query-export
+```
+
 ### Docker
 
 A Docker image is available here: https://github.com/pteich/elastic-query-export/pkgs/container/elastic-query-export
@@ -32,6 +40,14 @@ It can be used just like the locally installed binary:
 
 ```shell
 docker run ghcr.io/pteich/elastic-query-export:1.6.2 -h
+```
+
+## Interactive Mode
+
+If you run `es-query-export` without any arguments, it starts in interactive mode. This wizard will guide you through the process of connecting to your ElasticSearch/OpenSearch instance and configuring your export.
+
+```shell
+es-query-export
 ```
 
 ## General usage

@@ -7,10 +7,12 @@ import (
 	"os/signal"
 	"syscall"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pteich/configstruct"
 
 	"github.com/pteich/elastic-query-export/export"
 	"github.com/pteich/elastic-query-export/flags"
+	"github.com/pteich/elastic-query-export/tui"
 )
 
 var Version string
@@ -30,6 +32,15 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
+
+	if len(os.Args) < 2 {
+		p := tea.NewProgram(tui.InitialModel(&conf))
+		if _, err := p.Run(); err != nil {
+			fmt.Printf("Error: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	cmd := configstruct.NewCommand(
 		"",
