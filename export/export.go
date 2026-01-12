@@ -113,10 +113,10 @@ func (e *Client) GetIndices(ctx context.Context, pattern string) ([]string, erro
 		return client.GetIndices(ctx, pattern)
 	case 8:
 		client := e.client.(*elasticv8.Client)
-		return client.GetIndices(pattern)
+		return client.GetIndices(ctx, pattern)
 	case 9:
 		client := e.client.(*elasticv9.Client)
-		return client.GetIndices(pattern)
+		return client.GetIndices(ctx, pattern)
 	default:
 		return nil, errors.New("unsupported version")
 	}
