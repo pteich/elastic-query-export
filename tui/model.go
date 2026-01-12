@@ -538,7 +538,7 @@ func (m Model) View() string {
 		versionStatus := fmt.Sprintf("Version: [%d] [←/→ to change, use 7 for OpenSearch]", m.conf.ElasticVersion)
 
 		view = fmt.Sprintf(
-			"Connection Settings\n\n%s\n%s\n%s\n\n[Tab/Enter] Next field  [←/→] Change version  [Space] Toggle SSL  [Enter on URL] Continue",
+			"Connection Settings\n\n%s\n%s\n%s\n\n[Tab/Enter] Next field  [←/→] Change version  [Space] Toggle SSL  [Enter on Index Pattern] Continue",
 			inputs,
 			sslStatus,
 			versionStatus,
