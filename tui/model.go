@@ -623,7 +623,7 @@ func (m Model) View() string {
 			percent = 0
 		}
 		return fmt.Sprintf(
-			"Exporting...\n\n%s\n\n%d / %d documents\n\nPress Esc to cancel",
+			"Exporting...\n\n%s\n\n%d / %d documents\n\nPress Esc to exit",
 			m.progress.ViewAs(percent),
 			m.exported,
 			m.total,
