@@ -443,7 +443,7 @@ func (c *Client) GetIndices(ctx context.Context, pattern string) ([]string, erro
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, fmt.Errorf("error getting indices: %s", res.String())
+		return nil, fmt.Errorf("error getting indices: status %d", res.StatusCode)
 	}
 
 	type indexRow struct {

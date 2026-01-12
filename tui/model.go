@@ -77,14 +77,14 @@ func (f formatItem) Description() string { return f.desc }
 func (f formatItem) FilterValue() string { return f.format }
 
 type queryTypeItem struct {
-	ty    string
-	desc  string
-	field string
+	queryType string
+	desc      string
+	field     string
 }
 
-func (q queryTypeItem) Title() string       { return q.ty }
+func (q queryTypeItem) Title() string       { return q.queryType }
 func (q queryTypeItem) Description() string { return q.desc }
-func (q queryTypeItem) FilterValue() string { return q.ty }
+func (q queryTypeItem) FilterValue() string { return q.queryType }
 
 type Model struct {
 	step   step
@@ -493,7 +493,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	if m.err != nil {
-		return fmt.Sprintf("Error: %v\nPress q to quit.", m.err)
+		return fmt.Sprintf("Error: %v\nPress Ctrl+C or Esc to quit.", m.err)
 	}
 
 	switch m.step {
@@ -801,7 +801,6 @@ var (
 	blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	cursorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	noStyle      = lipgloss.NewStyle()
-	helpStyle    = blurredStyle.Copy()
 )
 
 func (m *Model) shiftInputFocus(lastIndex int, backward bool) tea.Cmd {
