@@ -119,7 +119,7 @@ func InitialModel(conf *flags.Flags) Model {
 		conf:           conf,
 		selectedFields: make(map[string]bool),
 	}
-	m.inputs = make([]textinput.Model, 7)
+	m.inputs = make([]textinput.Model, 6)
 
 	var t textinput.Model
 
@@ -623,7 +623,7 @@ func (m Model) View() string {
 			percent = 0
 		}
 		return fmt.Sprintf(
-			"Exporting...\n\n%s\n\n%d / %d documents\n\nPress Esc to cancel",
+			"Exporting...\n\n%s\n\n%d / %d documents\n\nPress Esc to exit",
 			m.progress.ViewAs(percent),
 			m.exported,
 			m.total,
@@ -676,14 +676,14 @@ func (m *Model) initQueryInputs() {
 	t = textinput.New()
 	t.Cursor.Style = cursorStyle
 	t.CharLimit = 64
-	t.Placeholder = "2024-01-01"
+	t.Placeholder = "YYYY-MM-DD"
 	t.Prompt = "Start Date: "
 	m.inputs[2] = t
 
 	t = textinput.New()
 	t.Cursor.Style = cursorStyle
 	t.CharLimit = 64
-	t.Placeholder = "2024-12-31"
+	t.Placeholder = "YYYY-MM-DD"
 	t.Prompt = "End Date: "
 	m.inputs[3] = t
 
