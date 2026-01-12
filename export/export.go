@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	elasticv7import "github.com/olivere/elastic/v7"
 
@@ -342,7 +341,7 @@ func NewClient(conf *flags.Flags) (*Client, error) {
 			elasticv7.SetHttpClient(httpClient),
 			elasticv7.SetURL(conf.ElasticURL),
 			elasticv7.SetSniff(false),
-			elasticv7.SetHealthcheckInterval(10 * time.Second),
+			elasticv7.SetHealthcheck(false),
 			elasticv7.SetErrorLog(logger),
 		}
 

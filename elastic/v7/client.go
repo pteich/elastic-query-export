@@ -127,6 +127,10 @@ func SetHealthcheckInterval(interval time.Duration) elastic.ClientOptionFunc {
 	return elastic.SetHealthcheckInterval(interval)
 }
 
+func SetHealthcheck(value bool) elastic.ClientOptionFunc {
+	return elastic.SetHealthcheck(value)
+}
+
 func SetErrorLog(logger *log.Logger) elastic.ClientOptionFunc {
 	return elastic.SetErrorLog(logger)
 }

@@ -19,13 +19,13 @@ import (
 var Version string
 
 const (
-	configEnvVar           = "ELASTIC_QUERY_EXPORT_CONFIG"
-	defaultConfigFileName  = ".elastic-query-export.yaml"
+	configEnvVar          = "ELASTIC_QUERY_EXPORT_CONFIG"
+	defaultConfigFileName = ".elastic-query-export.yaml"
 )
 
 func main() {
 	conf := flags.Flags{
-		ElasticURL:       "http://localhost:9200",
+		ElasticURL:       "https://localhost:9200",
 		ElasticVerifySSL: false,
 		ElasticVersion:   7,
 		Index:            "logs-*",
