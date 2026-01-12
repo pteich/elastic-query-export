@@ -656,6 +656,9 @@ func (m *Model) initQueryInputs() {
 	t.CharLimit = 256
 	t.Placeholder = "*"
 	t.Prompt = "Query: "
+	if m.conf.Query != "" {
+		t.SetValue(m.conf.Query)
+	}
 	t.Focus()
 	t.TextStyle = focusedStyle
 	m.inputs[0] = t
@@ -665,6 +668,9 @@ func (m *Model) initQueryInputs() {
 	t.CharLimit = 1000
 	t.Placeholder = `{"query": {"match_all": {}}}`
 	t.Prompt = "RAW Query: "
+	if m.conf.RAWQuery != "" {
+		t.SetValue(m.conf.RAWQuery)
+	}
 	m.inputs[1] = t
 
 	t = textinput.New()
@@ -884,7 +890,6 @@ func startExportCmd(m Model) tea.Cmd {
 
 var (
 	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	cursorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	noStyle      = lipgloss.NewStyle()
 )

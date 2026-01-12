@@ -342,7 +342,7 @@ func NewClient(conf *flags.Flags) (*Client, error) {
 			elasticv7.SetHttpClient(httpClient),
 			elasticv7.SetURL(conf.ElasticURL),
 			elasticv7.SetSniff(false),
-			elasticv7.SetHealthcheckInterval(60 * time.Second),
+			elasticv7.SetHealthcheckInterval(10 * time.Second),
 			elasticv7.SetErrorLog(logger),
 		}
 
