@@ -39,6 +39,7 @@ func (i item) Description() string { return "" }
 
 type fieldItemDelegate struct {
 	selected map[string]bool
+	styles   list.DefaultItemStyles
 }
 
 func (d fieldItemDelegate) Height() int  { return 1 }
@@ -61,10 +62,10 @@ func (d fieldItemDelegate) Render(w io.Writer, m list.Model, index int, listItem
 
 	line := fmt.Sprintf("%s %s", checkbox, name)
 	if index == m.Index() {
-		fmt.Fprint(w, m.Styles.SelectedTitle.Render(line))
+		fmt.Fprint(w, d.styles.SelectedTitle.Render(line))
 		return
 	}
-	fmt.Fprint(w, m.Styles.NormalTitle.Render(line))
+	fmt.Fprint(w, d.styles.NormalTitle.Render(line))
 }
 
 type formatItem struct {
@@ -577,9 +578,9 @@ func (m Model) View() string {
 
 func (m *Model) initQueryTypeList() {
 	items := []list.Item{
-		queryTypeItem{ty: "Match All", desc: "Return all documents", field: "*"},
-		queryTypeItem{ty: "Lucene Query", desc: "Query string like in Kibana", field: "query_placeholder"},
-		queryTypeItem{ty: "Raw JSON Query", desc: "Raw Elasticsearch query DSL", field: ""},
+		queryTypeItem{queryType: "Match All", desc: "Return all documents", field: "*"},
+		queryTypeItem{queryType: "Lucene Query", desc: "Query string like in Kibana", field: "query_placeholder"},
+		queryTypeItem{queryType: "Raw JSON Query", desc: "Raw Elasticsearch query DSL", field: ""},
 	}
 
 	m.list = list.New(items, list.NewDefaultDelegate(), m.width, m.height-6)
@@ -679,7 +680,7 @@ func (m *Model) initFieldsList(fields []string) {
 	}
 
 	m.selectedFields = make(map[string]bool)
-	m.list = list.New(items, fieldItemDelegate{selected: m.selectedFields}, m.width, m.height-6)
+	m.list = list.New(items, fieldItemDelegate{selected: m.selectedFields, styles: list.NewDefaultItemStyles()}, m.width, m.height-6)
 	m.list.Title = title
 	m.list.SetShowStatusBar(false)
 	m.list.SetFilteringEnabled(true)
@@ -687,7 +688,7 @@ func (m *Model) initFieldsList(fields []string) {
 
 func (m *Model) initFieldsLoading() {
 	m.selectedFields = make(map[string]bool)
-	m.list = list.New([]list.Item{}, fieldItemDelegate{selected: m.selectedFields}, m.width, m.height-6)
+	m.list = list.New([]list.Item{}, fieldItemDelegate{selected: m.selectedFields, styles: list.NewDefaultItemStyles()}, m.width, m.height-6)
 	m.list.Title = "Loading fields..."
 	m.list.SetShowStatusBar(false)
 	m.list.SetFilteringEnabled(false)
