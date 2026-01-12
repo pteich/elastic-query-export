@@ -670,14 +670,14 @@ func (m *Model) initQueryInputs() {
 	t = textinput.New()
 	t.Cursor.Style = cursorStyle
 	t.CharLimit = 64
-	t.Placeholder = "2024-01-01"
+	t.Placeholder = "YYYY-MM-DD"
 	t.Prompt = "Start Date: "
 	m.inputs[2] = t
 
 	t = textinput.New()
 	t.Cursor.Style = cursorStyle
 	t.CharLimit = 64
-	t.Placeholder = "2024-12-31"
+	t.Placeholder = "YYYY-MM-DD"
 	t.Prompt = "End Date: "
 	m.inputs[3] = t
 
