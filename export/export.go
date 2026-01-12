@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	elasticv7import "github.com/olivere/elastic/v7"
+
 	elasticsearch "github.com/pteich/elastic-query-export/elastic"
 	elasticv7 "github.com/pteich/elastic-query-export/elastic/v7"
 	elasticv8 "github.com/pteich/elastic-query-export/elastic/v8"
@@ -27,12 +27,12 @@ type Formatter interface {
 	Run(context.Context, <-chan elasticsearch.SearchHit) error
 }
 
-type elasticClient struct {
+type Client struct {
 	version int
 	client  any
 }
 
-func (e *elasticClient) Count(ctx context.Context, index string, query any) (int64, error) {
+func (e *Client) Count(ctx context.Context, index string, query any) (int64, error) {
 	switch e.version {
 	case 7:
 		client := e.client.(*elasticv7.Client)
@@ -60,7 +60,7 @@ func (e *elasticClient) Count(ctx context.Context, index string, query any) (int
 	}
 }
 
-func (e *elasticClient) Scroll(index string, size int, query any) any {
+func (e *Client) Scroll(index string, size int, query any) any {
 	switch e.version {
 	case 7:
 		client := e.client.(*elasticv7.Client)
@@ -88,7 +88,10 @@ func (e *elasticClient) Scroll(index string, size int, query any) any {
 	}
 }
 
-func (e *elasticClient) Stop() {
+func (e *Client) Stop() {
+	if e.client == nil {
+		return
+	}
 	switch e.version {
 	case 7:
 		client := e.client.(*elasticv7.Client)
@@ -99,6 +102,38 @@ func (e *elasticClient) Stop() {
 	case 9:
 		client := e.client.(*elasticv9.Client)
 		client.Stop()
+	}
+}
+
+func (e *Client) GetIndices(ctx context.Context, pattern string) ([]string, error) {
+	switch e.version {
+	case 7:
+		client := e.client.(*elasticv7.Client)
+		return client.GetIndices(ctx, pattern)
+	case 8:
+		client := e.client.(*elasticv8.Client)
+		return client.GetIndices(ctx, pattern)
+	case 9:
+		client := e.client.(*elasticv9.Client)
+		return client.GetIndices(ctx, pattern)
+	default:
+		return nil, errors.New("unsupported version")
+	}
+}
+
+func (e *Client) GetFields(ctx context.Context, index string) ([]string, error) {
+	switch e.version {
+	case 7:
+		client := e.client.(*elasticv7.Client)
+		return client.GetFields(ctx, index)
+	case 8:
+		client := e.client.(*elasticv8.Client)
+		return client.GetFields(ctx, index)
+	case 9:
+		client := e.client.(*elasticv9.Client)
+		return client.GetFields(ctx, index)
+	default:
+		return nil, errors.New("unsupported version")
 	}
 }
 
@@ -163,7 +198,7 @@ func scrollServiceFetchSourceContext(version int, scrollService any, includeFiel
 }
 
 func Run(ctx context.Context, conf *flags.Flags) {
-	client, query, err := createClientAndQuery(conf)
+	client, err := NewClient(conf)
 	if err != nil {
 		log.Fatalf("Error connecting to ElasticSearch: %s", err)
 	}
@@ -185,33 +220,7 @@ func Run(ctx context.Context, conf *flags.Flags) {
 		defer outfile.Close()
 	}
 
-	var rangeQuery any
-
-	esQuery := buildBoolQuery(client.version)
-
-	if conf.StartDate != "" && conf.EndDate != "" {
-		rangeQuery = buildRangeQuery(client.version, conf.Timefield, conf.StartDate, conf.EndDate, true, true)
-	} else if conf.StartDate != "" {
-		rangeQuery = buildRangeQuery(client.version, conf.Timefield, conf.StartDate, "", true, false)
-	} else if conf.EndDate != "" {
-		rangeQuery = buildRangeQuery(client.version, conf.Timefield, "", conf.EndDate, false, true)
-	} else {
-		rangeQuery = nil
-	}
-
-	if rangeQuery != nil {
-		esQuery = applyFilterToBoolQuery(client.version, esQuery, rangeQuery)
-	}
-
-	if conf.RAWQuery != "" {
-		esQuery = applyMustToBoolQuery(client.version, esQuery, buildRawQuery(client.version, conf.RAWQuery))
-	} else if conf.Query != "" {
-		esQuery = applyMustToBoolQuery(client.version, esQuery, buildQueryStringQuery(client.version, conf.Query))
-	} else {
-		esQuery = applyMustToBoolQuery(client.version, esQuery, buildMatchAllQuery(client.version))
-	}
-
-	query = buildFinalQuery(client.version, esQuery)
+	query := BuildQuery(client.version, conf)
 
 	total, err := client.Count(ctx, conf.Index, query)
 	if err != nil {
@@ -306,7 +315,7 @@ func Run(ctx context.Context, conf *flags.Flags) {
 	bar.Finish()
 }
 
-func createClientAndQuery(conf *flags.Flags) (*elasticClient, any, error) {
+func NewClient(conf *flags.Flags) (*Client, error) {
 	tlsCfg := &tls.Config{
 		InsecureSkipVerify: !conf.ElasticVerifySSL,
 	}
@@ -314,7 +323,7 @@ func createClientAndQuery(conf *flags.Flags) (*elasticClient, any, error) {
 	if conf.ElasticClientCrt != "" && conf.ElasticClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(conf.ElasticClientCrt, conf.ElasticClientKey)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		tlsCfg.Certificates = []tls.Certificate{cert}
 	}
@@ -332,7 +341,7 @@ func createClientAndQuery(conf *flags.Flags) (*elasticClient, any, error) {
 			elasticv7.SetHttpClient(httpClient),
 			elasticv7.SetURL(conf.ElasticURL),
 			elasticv7.SetSniff(false),
-			elasticv7.SetHealthcheckInterval(60 * time.Second),
+			elasticv7.SetHealthcheck(false),
 			elasticv7.SetErrorLog(logger),
 		}
 
@@ -346,29 +355,58 @@ func createClientAndQuery(conf *flags.Flags) (*elasticClient, any, error) {
 
 		client, err := elasticv7.NewClient(esOpts)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		return &elasticClient{version: 7, client: client}, elasticv7.NewBoolQuery(), nil
+		return &Client{version: 7, client: client}, nil
 
 	case 8:
 		cfg := elasticv8.NewConfig(conf.ElasticURL, conf.ElasticUser, conf.ElasticPass, conf.ElasticVerifySSL, httpClient)
 		client, err := elasticv8.NewClient(cfg)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		return &elasticClient{version: 8, client: client}, elasticv8.NewBoolQuery(), nil
+		return &Client{version: 8, client: client}, nil
 
 	case 9:
 		cfg := elasticv9.NewConfig(conf.ElasticURL, conf.ElasticUser, conf.ElasticPass, conf.ElasticVerifySSL, httpClient)
 		client, err := elasticv9.NewClient(cfg)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		return &elasticClient{version: 9, client: client}, elasticv9.NewBoolQuery(), nil
+		return &Client{version: 9, client: client}, nil
 
 	default:
-		return nil, nil, errors.New("unsupported ElasticSearch version")
+		return nil, errors.New("unsupported ElasticSearch version")
 	}
+}
+
+func BuildQuery(version int, conf *flags.Flags) any {
+	esQuery := buildBoolQuery(version)
+	var rangeQuery any
+
+	if conf.StartDate != "" && conf.EndDate != "" {
+		rangeQuery = buildRangeQuery(version, conf.Timefield, conf.StartDate, conf.EndDate, true, true)
+	} else if conf.StartDate != "" {
+		rangeQuery = buildRangeQuery(version, conf.Timefield, conf.StartDate, "", true, false)
+	} else if conf.EndDate != "" {
+		rangeQuery = buildRangeQuery(version, conf.Timefield, "", conf.EndDate, false, true)
+	} else {
+		rangeQuery = nil
+	}
+
+	if rangeQuery != nil {
+		esQuery = applyFilterToBoolQuery(version, esQuery, rangeQuery)
+	}
+
+	if conf.RAWQuery != "" {
+		esQuery = applyMustToBoolQuery(version, esQuery, buildRawQuery(version, conf.RAWQuery))
+	} else if conf.Query != "" {
+		esQuery = applyMustToBoolQuery(version, esQuery, buildQueryStringQuery(version, conf.Query))
+	} else {
+		esQuery = applyMustToBoolQuery(version, esQuery, buildMatchAllQuery(version))
+	}
+
+	return buildFinalQuery(version, esQuery)
 }
 
 func buildBoolQuery(version int) any {

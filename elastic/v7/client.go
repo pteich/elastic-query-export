@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/olivere/elastic/v7"
+	elasticbase "github.com/pteich/elastic-query-export/elastic"
 )
 
 type Client struct {
@@ -126,6 +127,10 @@ func SetHealthcheckInterval(interval time.Duration) elastic.ClientOptionFunc {
 	return elastic.SetHealthcheckInterval(interval)
 }
 
+func SetHealthcheck(value bool) elastic.ClientOptionFunc {
+	return elastic.SetHealthcheck(value)
+}
+
 func SetErrorLog(logger *log.Logger) elastic.ClientOptionFunc {
 	return elastic.SetErrorLog(logger)
 }
@@ -140,4 +145,26 @@ func SetBasicAuth(username, password string) elastic.ClientOptionFunc {
 
 func GetDefaultLogger() *log.Logger {
 	return log.New(os.Stderr, "ELASTIC ", log.LstdFlags)
+}
+func (c *Client) GetIndices(ctx context.Context, pattern string) ([]string, error) {
+	res, err := c.client.CatIndices().Index(pattern).Columns("index").Do(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	indices := make([]string, 0, len(res))
+	for _, row := range res {
+		indices = append(indices, row.Index)
+	}
+
+	return indices, nil
+}
+
+func (c *Client) GetFields(ctx context.Context, index string) ([]string, error) {
+	res, err := c.client.GetMapping().Index(index).Do(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return elasticbase.ExtractFieldsFromMapping(res), nil
 }

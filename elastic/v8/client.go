@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -214,6 +215,29 @@ func (s *ScrollService) FetchSourceContext(includeFields []string) *ScrollServic
 	return s
 }
 
+func (c *Client) GetFields(ctx context.Context, index string) ([]string, error) {
+	req := esapi.IndicesGetMappingRequest{
+		Index: []string{index},
+	}
+
+	res, err := req.Do(ctx, c.client)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, errors.New(res.String())
+	}
+
+	var resp map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return nil, err
+	}
+
+	return elastic.ExtractFieldsFromMapping(resp), nil
+}
+
 func (r *SearchResult) Hits() []SearchHit {
 	return r.hits
 }
@@ -404,4 +428,37 @@ func (q *QueryBuilder) Build() map[string]interface{} {
 
 func TrimSpace(s string) string {
 	return strings.TrimSpace(s)
+}
+func (c *Client) GetIndices(ctx context.Context, pattern string) ([]string, error) {
+	res, err := c.client.Cat.Indices(
+		c.client.Cat.Indices.WithContext(ctx),
+		c.client.Cat.Indices.WithIndex(pattern),
+		c.client.Cat.Indices.WithH("index"),
+		c.client.Cat.Indices.WithFormat("json"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, fmt.Errorf("error getting indices: status %d", res.StatusCode)
+	}
+
+	type indexRow struct {
+		Index string `json:"index"`
+	}
+
+	var rows []indexRow
+	if err := json.NewDecoder(res.Body).Decode(&rows); err != nil {
+		return nil, err
+	}
+
+	indices := make([]string, 0, len(rows))
+	for _, row := range rows {
+		indices = append(indices, row.Index)
+	}
+
+	return indices, nil
 }

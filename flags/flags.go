@@ -7,6 +7,7 @@ const (
 )
 
 type Flags struct {
+	ConfigPath      string `cli:"config" env:"ELASTIC_QUERY_EXPORT_CONFIG" usage:"Path to YAML config file" config:"true" yaml:"-"`
 	ElasticURL       string `cli:"connect" cliAlt:"c" usage:"ElasticSearch URL"`
 	ElasticUser      string `cli:"user" usage:"ElasticSearch Username"`
 	ElasticPass      string `cli:"pass" usage:"ElasticSearch Password"`
@@ -25,5 +26,5 @@ type Flags struct {
 	Timefield        string `cli:"timefield" usage:"Field name to use for start and end date query"`
 	Fieldlist        string `cli:"fields" usage:"Fields to include in export as comma separated list"`
 	Trace            bool   `cli:"trace" usage:"Enable debug output"`
-	Fields           []string
+	Fields           []string `yaml:"-"`
 }
