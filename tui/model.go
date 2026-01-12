@@ -519,7 +519,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	if m.err != nil {
-		return fmt.Sprintf("Error: %v\nPress q to quit.", m.err)
+		return fmt.Sprintf("Error: %v\nPress Ctrl+C or Esc to quit.", m.err)
 	}
 
 	switch m.step {
