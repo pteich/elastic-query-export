@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -28,6 +30,7 @@ const (
 	stepFieldsManual
 	stepExport
 	stepExportManual
+	stepSaveConfig
 	stepProgress
 )
 
@@ -107,6 +110,7 @@ type Model struct {
 	exported       int
 	total          int
 	selectedFields map[string]bool
+	saveReturnStep step
 }
 
 func InitialModel(conf *flags.Flags) Model {
@@ -172,13 +176,24 @@ func InitialModel(conf *flags.Flags) Model {
 
 	t = textinput.New()
 	t.Cursor.Style = cursorStyle
+	t.CharLimit = 3
+	t.Prompt = "Verify SSL: "
+	if conf.ElasticVerifySSL {
+		t.SetValue("on")
+	} else {
+		t.SetValue("off")
+	}
+	m.inputs[5] = t
+
+	t = textinput.New()
+	t.Cursor.Style = cursorStyle
 	t.CharLimit = 120
 	t.Placeholder = "logs-* (supports wildcards)"
 	t.Prompt = "Index Pattern: "
 	if conf.Index != "" {
 		t.SetValue(conf.Index)
 	}
-	m.inputs[5] = t
+	m.inputs[6] = t
 
 	m.toggle = conf.ElasticVerifySSL
 	m.conf.ElasticVersion = conf.ElasticVersion
@@ -223,9 +238,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.conf.ElasticVersion++
 			}
 		case " ":
-			if m.step == stepConnection {
+			if m.step == stepConnection && m.focus == 5 {
 				m.toggle = !m.toggle
 				m.conf.ElasticVerifySSL = m.toggle
+				if m.toggle {
+					m.inputs[5].SetValue("on")
+				} else {
+					m.inputs[5].SetValue("off")
+				}
+				return m, nil
 			} else if m.step == stepFields {
 				selected := m.list.SelectedItem()
 				if selected != nil {
@@ -237,22 +258,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.step == stepConnection {
 			switch msg.String() {
+			case "ctrl+d":
+				if m.focus == len(m.inputs)-1 {
+					m.syncConnectionInputs()
+					return m, func() tea.Msg {
+						client, err := export.NewClient(m.conf)
+						if err != nil {
+							return errMsg{err}
+						}
+						indices, err := client.GetIndices(context.Background(), m.conf.Index)
+						if err != nil {
+							return errMsg{err}
+						}
+						return connectedMsg{client: client, indices: indices, indexPattern: m.conf.Index}
+					}
+				}
 			case "enter":
-				if m.focus == len(m.inputs)-2 {
-					m.conf.ElasticURL = m.inputs[0].Value()
-					m.conf.ElasticUser = m.inputs[1].Value()
-					m.conf.ElasticPass = m.inputs[2].Value()
-					m.conf.ElasticClientCrt = m.inputs[3].Value()
-					m.conf.ElasticClientKey = m.inputs[4].Value()
-					m.conf.ElasticVerifySSL = m.toggle
-					m.conf.Index = m.inputs[5].Value()
+				if m.focus == len(m.inputs)-1 {
+					m.syncConnectionInputs()
 
 					m.step = stepQueryType
 					m.initQueryTypeList()
 					return m, nil
 				}
 			case "tab", "shift+tab", "up", "down":
-				return m, m.shiftInputFocus(len(m.inputs)-2, msg.String() == "up" || msg.String() == "shift+tab")
+				return m, m.shiftInputFocus(len(m.inputs)-1, msg.String() == "up" || msg.String() == "shift+tab")
 			}
 		} else if m.step == stepQueryType {
 			switch msg.String() {
@@ -378,8 +408,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if ok {
 					m.conf.OutFormat = f.format
 					m.conf.Outfile = "output." + f.format
-					m.step = stepProgress
-					return m, startExportCmd(m)
+					m.step = stepSaveConfig
+					m.saveReturnStep = stepExport
+					m.initSaveConfigInput()
+					return m, nil
 				}
 			}
 		} else if m.step == stepExportManual {
@@ -388,11 +420,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.focus == len(m.inputs)-1 {
 					m.conf.OutFormat = m.inputs[0].Value()
 					m.conf.Outfile = m.inputs[1].Value()
-					m.step = stepProgress
-					return m, startExportCmd(m)
+					m.step = stepSaveConfig
+					m.saveReturnStep = stepExportManual
+					m.initSaveConfigInput()
+					return m, nil
 				}
 			case "tab", "shift+tab", "up", "down":
 				return m, m.shiftInputFocus(len(m.inputs)-1, msg.String() == "up" || msg.String() == "shift+tab")
+			}
+		} else if m.step == stepSaveConfig {
+			switch msg.String() {
+			case "enter":
+				path := strings.TrimSpace(m.inputs[0].Value())
+				if path == "" {
+					m.conf.ConfigPath = ""
+				} else {
+					m.conf.ConfigPath = path
+				}
+				m.step = stepProgress
+				return m, startExportCmd(m)
+			case "esc":
+				m.step = m.saveReturnStep
+				return m, nil
 			}
 		}
 
@@ -443,6 +492,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.step == stepConnection {
 		cmds := make([]tea.Cmd, len(m.inputs))
 		for i := range m.inputs {
+			if i == 5 {
+				continue
+			}
 			m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
 		}
 		return m, tea.Batch(cmds...)
@@ -482,6 +534,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	} else if m.step == stepQueryType {
 		m.list, cmd = m.list.Update(msg)
 		return m, cmd
+	} else if m.step == stepSaveConfig {
+		cmds := make([]tea.Cmd, len(m.inputs))
+		for i := range m.inputs {
+			m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
+		}
+		return m, tea.Batch(cmds...)
 	} else if m.step == stepProgress {
 		var progressCmd tea.Cmd
 		progressModel, progressCmd := m.progress.Update(msg)
@@ -501,21 +559,15 @@ func (m Model) View() string {
 	case stepConnection:
 		var view, inputs string
 
-		for i := 0; i <= len(m.inputs)-2; i++ {
+		for i := 0; i <= len(m.inputs)-1; i++ {
 			inputs += m.inputs[i].View() + "\n"
-		}
-
-		sslStatus := "[ ]"
-		if m.toggle {
-			sslStatus = "[X]"
 		}
 
 		versionStatus := fmt.Sprintf("Version: [%d] [←/→ to change, use 7 for OpenSearch]", m.conf.ElasticVersion)
 
 		view = fmt.Sprintf(
-			"Connection Settings\n\n%s\n%s\n%s\n\n[Tab] Next field  [←/→] Change version  [Space] Toggle SSL  [Enter on Index Pattern] Continue",
+			"Connection Settings\n\n%s\n%s\n\n[Tab] Next field  [←/→] Change version  [Space] Toggle SSL on Verify SSL row  [Ctrl+D] Discover indices  [Enter on Index Pattern] Continue",
 			inputs,
-			sslStatus,
 			versionStatus,
 		)
 		return view
@@ -559,6 +611,11 @@ func (m Model) View() string {
 		return fmt.Sprintf(
 			"Manual Export Configuration\n\n%s\n\n[Tab] Next field  [Enter] Start export",
 			inputs,
+		)
+	case stepSaveConfig:
+		return fmt.Sprintf(
+			"Save Configuration\n\n%s\n\n[Enter] Save path and start export  [Esc] Back",
+			m.inputs[0].View(),
 		)
 	case stepProgress:
 		percent := float64(m.exported) / float64(m.total)
@@ -747,6 +804,34 @@ func (m *Model) initExportManualInput() {
 	m.focus = 0
 }
 
+func (m *Model) initSaveConfigInput() {
+	m.inputs = make([]textinput.Model, 1)
+
+	t := textinput.New()
+	t.Cursor.Style = cursorStyle
+	t.CharLimit = 200
+	t.Placeholder = defaultConfigPath()
+	t.Prompt = "Config File (clear to skip): "
+	if m.conf.ConfigPath != "" {
+		t.SetValue(m.conf.ConfigPath)
+	} else {
+		t.SetValue(defaultConfigPath())
+	}
+	t.Focus()
+	t.TextStyle = focusedStyle
+	m.inputs[0] = t
+}
+
+func (m *Model) syncConnectionInputs() {
+	m.conf.ElasticURL = m.inputs[0].Value()
+	m.conf.ElasticUser = m.inputs[1].Value()
+	m.conf.ElasticPass = m.inputs[2].Value()
+	m.conf.ElasticClientCrt = m.inputs[3].Value()
+	m.conf.ElasticClientKey = m.inputs[4].Value()
+	m.conf.ElasticVerifySSL = m.toggle
+	m.conf.Index = m.inputs[6].Value()
+}
+
 type connectedMsg struct {
 	client       *export.Client
 	indices      []string
@@ -828,4 +913,12 @@ func (m *Model) shiftInputFocus(lastIndex int, backward bool) tea.Cmd {
 		m.inputs[i].TextStyle = noStyle
 	}
 	return tea.Batch(cmds...)
+}
+
+func defaultConfigPath() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ".elastic-query-export.yaml"
+	}
+	return filepath.Join(homeDir, ".elastic-query-export.yaml")
 }

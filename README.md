@@ -50,6 +50,16 @@ If you run `es-query-export` without any arguments, it starts in interactive mod
 es-query-export
 ```
 
+### Config File
+
+You can load a YAML config file using `--config` or the `ELASTIC_QUERY_EXPORT_CONFIG` environment variable:
+
+```shell
+es-query-export --config ~/.elastic-query-export.yaml
+```
+
+In TUI mode, if a config file exists at `~/.elastic-query-export.yaml` it will be loaded automatically, and you will be prompted for a save path before export starts.
+
 ## General usage
 
 ````shell

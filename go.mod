@@ -9,7 +9,7 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.19.1
 	github.com/elastic/go-elasticsearch/v9 v9.2.1
 	github.com/olivere/elastic/v7 v7.0.32
-	github.com/pteich/configstruct v1.6.0
+	github.com/pteich/configstruct v1.7.0
 	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/elasticsearch v0.40.0
 	golang.org/x/sync v0.19.0
