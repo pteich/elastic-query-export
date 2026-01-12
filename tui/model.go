@@ -239,7 +239,8 @@ type connectedMsg struct {
 
 type errMsg struct{ err error }
 
-// Styles (temporary until styles.go)
+// Styles
+// TODO some styles for future use
 var (
 	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
