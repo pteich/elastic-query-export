@@ -119,7 +119,7 @@ func InitialModel(conf *flags.Flags) Model {
 		conf:           conf,
 		selectedFields: make(map[string]bool),
 	}
-	m.inputs = make([]textinput.Model, 7)
+	m.inputs = make([]textinput.Model, 6)
 
 	var t textinput.Model
 
