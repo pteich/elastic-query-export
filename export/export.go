@@ -122,6 +122,22 @@ func (e *Client) GetIndices(ctx context.Context, pattern string) ([]string, erro
 	}
 }
 
+func (e *Client) GetFields(ctx context.Context, index string) ([]string, error) {
+	switch e.version {
+	case 7:
+		client := e.client.(*elasticv7.Client)
+		return client.GetFields(ctx, index)
+	case 8:
+		client := e.client.(*elasticv8.Client)
+		return client.GetFields(ctx, index)
+	case 9:
+		client := e.client.(*elasticv9.Client)
+		return client.GetFields(ctx, index)
+	default:
+		return nil, errors.New("unsupported version")
+	}
+}
+
 func scrollServiceDo(ctx context.Context, version int, scrollService any) (any, int64, error) {
 	switch version {
 	case 7:

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/olivere/elastic/v7"
+	elasticbase "github.com/pteich/elastic-query-export/elastic"
 )
 
 type Client struct {
@@ -153,4 +154,13 @@ func (c *Client) GetIndices(ctx context.Context, pattern string) ([]string, erro
 	}
 
 	return indices, nil
+}
+
+func (c *Client) GetFields(ctx context.Context, index string) ([]string, error) {
+	res, err := c.client.GetMapping().Index(index).Do(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return elasticbase.ExtractFieldsFromMapping(res), nil
 }

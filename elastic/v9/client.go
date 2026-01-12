@@ -215,6 +215,29 @@ func (s *ScrollService) FetchSourceContext(includeFields []string) *ScrollServic
 	return s
 }
 
+func (c *Client) GetFields(ctx context.Context, index string) ([]string, error) {
+	req := esapi.IndicesGetMappingRequest{
+		Index: []string{index},
+	}
+
+	res, err := req.Do(ctx, c.client)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, errors.New(res.String())
+	}
+
+	var resp map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return nil, err
+	}
+
+	return elastic.ExtractFieldsFromMapping(resp), nil
+}
+
 func (r *SearchResult) Hits() []SearchHit {
 	return r.hits
 }

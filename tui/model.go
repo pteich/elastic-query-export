@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -35,6 +36,36 @@ type item string
 func (i item) FilterValue() string { return string(i) }
 func (i item) Title() string       { return string(i) }
 func (i item) Description() string { return "" }
+
+type fieldItemDelegate struct {
+	selected map[string]bool
+}
+
+func (d fieldItemDelegate) Height() int  { return 1 }
+func (d fieldItemDelegate) Spacing() int { return 0 }
+func (d fieldItemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd {
+	return nil
+}
+
+func (d fieldItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	field, ok := listItem.(item)
+	if !ok {
+		return
+	}
+
+	name := string(field)
+	checkbox := "[ ]"
+	if d.selected[name] {
+		checkbox = "[X]"
+	}
+
+	line := fmt.Sprintf("%s %s", checkbox, name)
+	if index == m.Index() {
+		fmt.Fprint(w, m.Styles.SelectedTitle.Render(line))
+		return
+	}
+	fmt.Fprint(w, m.Styles.NormalTitle.Render(line))
+}
 
 type formatItem struct {
 	format string
@@ -205,10 +236,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.step == stepConnection {
 			switch msg.String() {
-			case "tab", "shift+tab", "enter", "up", "down":
-				s := msg.String()
-
-				if s == "enter" && m.focus == len(m.inputs)-2 {
+			case "enter":
+				if m.focus == len(m.inputs)-2 {
 					m.conf.ElasticURL = m.inputs[0].Value()
 					m.conf.ElasticUser = m.inputs[1].Value()
 					m.conf.ElasticPass = m.inputs[2].Value()
@@ -221,30 +250,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.initQueryTypeList()
 					return m, nil
 				}
-
-				if s == "up" || s == "shift+tab" {
-					m.focus--
-				} else {
-					m.focus++
-				}
-
-				if m.focus > len(m.inputs)-2 {
-					m.focus = 0
-				} else if m.focus < 0 {
-					m.focus = len(m.inputs) - 2
-				}
-
-				cmds := make([]tea.Cmd, len(m.inputs))
-				for i := 0; i <= len(m.inputs)-2; i++ {
-					if i == m.focus {
-						cmds[i] = m.inputs[i].Focus()
-						m.inputs[i].TextStyle = focusedStyle
-						continue
-					}
-					m.inputs[i].Blur()
-					m.inputs[i].TextStyle = noStyle
-				}
-				return m, tea.Batch(cmds...)
+			case "tab", "shift+tab", "up", "down":
+				return m, m.shiftInputFocus(len(m.inputs)-2, msg.String() == "up" || msg.String() == "shift+tab")
 			}
 		} else if m.step == stepQueryType {
 			switch msg.String() {
@@ -289,30 +296,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return connectedMsg{client: client, indices: indices, indexPattern: m.inputs[5].Value()}
 					}
 				}
-
-				if msg.String() == "up" || msg.String() == "shift+tab" {
-					m.focus--
-				} else {
-					m.focus++
-				}
-
-				if m.focus > len(m.inputs)-1 {
-					m.focus = 0
-				} else if m.focus < 0 {
-					m.focus = len(m.inputs) - 1
-				}
-
-				cmds := make([]tea.Cmd, len(m.inputs))
-				for i := 0; i <= len(m.inputs)-1; i++ {
-					if i == m.focus {
-						cmds[i] = m.inputs[i].Focus()
-						m.inputs[i].TextStyle = focusedStyle
-						continue
-					}
-					m.inputs[i].Blur()
-					m.inputs[i].TextStyle = noStyle
-				}
-				return m, tea.Batch(cmds...)
+			case "tab", "shift+tab", "up", "down":
+				return m, m.shiftInputFocus(len(m.inputs)-1, msg.String() == "up" || msg.String() == "shift+tab")
 			}
 		} else if m.step == stepIndex {
 			switch msg.String() {
@@ -328,8 +313,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if ok {
 					m.conf.Index = string(i)
 					m.step = stepFields
-					m.initFieldsList()
-					return m, nil
+					m.initFieldsLoading()
+					return m, loadFieldsCmd(m.client, m.conf.Index)
 				}
 			}
 		} else if m.step == stepIndexManual {
@@ -337,8 +322,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				m.conf.Index = m.inputs[0].Value()
 				m.step = stepFields
-				m.initFieldsList()
-				return m, nil
+				m.initFieldsLoading()
+				return m, loadFieldsCmd(m.client, m.conf.Index)
 			case "esc":
 				m.step = stepIndex
 				return m, nil
@@ -405,30 +390,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.step = stepProgress
 					return m, startExportCmd(m)
 				}
-
-				if msg.String() == "up" || msg.String() == "shift+tab" {
-					m.focus--
-				} else {
-					m.focus++
-				}
-
-				if m.focus > len(m.inputs)-1 {
-					m.focus = 0
-				} else if m.focus < 0 {
-					m.focus = len(m.inputs) - 1
-				}
-
-				cmds := make([]tea.Cmd, len(m.inputs))
-				for i := 0; i <= len(m.inputs)-1; i++ {
-					if i == m.focus {
-						cmds[i] = m.inputs[i].Focus()
-						m.inputs[i].TextStyle = focusedStyle
-						continue
-					}
-					m.inputs[i].Blur()
-					m.inputs[i].TextStyle = noStyle
-				}
-				return m, tea.Batch(cmds...)
+			case "tab", "shift+tab", "up", "down":
+				return m, m.shiftInputFocus(len(m.inputs)-1, msg.String() == "up" || msg.String() == "shift+tab")
 			}
 		}
 
@@ -461,6 +424,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.step = stepIndexManual
 			m.initIndexManualInput()
 		}
+		return m, nil
+
+	case fieldsLoadedMsg:
+		if m.step != stepFields {
+			return m, nil
+		}
+		if msg.err != nil || len(msg.fields) == 0 {
+			m.initFieldsList(nil)
+			return m, nil
+		}
+		m.initFieldsList(msg.fields)
 		return m, nil
 	}
 
@@ -538,7 +512,7 @@ func (m Model) View() string {
 		versionStatus := fmt.Sprintf("Version: [%d] [←/→ to change, use 7 for OpenSearch]", m.conf.ElasticVersion)
 
 		view = fmt.Sprintf(
-			"Connection Settings\n\n%s\n%s\n%s\n\n[Tab/Enter] Next field  [←/→] Change version  [Space] Toggle SSL  [Enter on URL] Continue",
+			"Connection Settings\n\n%s\n%s\n%s\n\n[Tab] Next field  [←/→] Change version  [Space] Toggle SSL  [Enter on Index Pattern] Continue",
 			inputs,
 			sslStatus,
 			versionStatus,
@@ -554,7 +528,7 @@ func (m Model) View() string {
 		}
 
 		return fmt.Sprintf(
-			"Query Settings\n\n%s\n\n[Tab/Enter] Next field  [Enter] Continue",
+			"Query Settings\n\n%s\n\n[Tab] Next field  [Enter] Continue",
 			inputs,
 		)
 	case stepIndex:
@@ -565,20 +539,7 @@ func (m Model) View() string {
 			m.inputs[0].View(),
 		)
 	case stepFields:
-		var listContent string
-		items := m.list.Items()
-		for _, it := range items {
-			field := it.(item)
-			prefix := " "
-			if m.selectedFields[string(field)] {
-				prefix = "[X]"
-			}
-			listContent += fmt.Sprintf("%s %s\n", prefix, string(field))
-		}
-		return fmt.Sprintf(
-			"Select Fields (or 'm' for manual)\n\n%s\n\n[Space] Select/Deselect  [Enter] Continue  [m] Manual input",
-			listContent,
-		)
+		return m.list.View()
 	case stepFieldsManual:
 		return fmt.Sprintf(
 			"Manual Field List\n\n%s\n\n[Enter] Continue  [Esc] Back to selection",
@@ -595,7 +556,7 @@ func (m Model) View() string {
 			inputs += m.inputs[i].View() + "\n"
 		}
 		return fmt.Sprintf(
-			"Manual Export Configuration\n\n%s\n\n[Tab/Enter] Next field  [Enter] Start export",
+			"Manual Export Configuration\n\n%s\n\n[Tab] Next field  [Enter] Start export",
 			inputs,
 		)
 	case stepProgress:
@@ -695,24 +656,41 @@ func (m *Model) initIndexManualInput() {
 	m.inputs[0] = t
 }
 
-func (m *Model) initFieldsList() {
-	items := []list.Item{
-		item("@timestamp"),
-		item("message"),
-		item("level"),
-		item("host"),
-		item("service"),
-		item("tags"),
-		item("_source"),
-		item("_id"),
-		item("_index"),
+func (m *Model) initFieldsList(fields []string) {
+	var items []list.Item
+	title := "Select Fields (Space to toggle, Enter to continue, m for manual)"
+	if len(fields) == 0 {
+		title = "Select Fields (example list; Enter to continue, m for manual input)"
+		fields = []string{
+			"@timestamp",
+			"message",
+			"level",
+			"host",
+			"service",
+			"tags",
+			"_source",
+			"_id",
+			"_index",
+		}
 	}
 
-	m.list = list.New(items, list.NewDefaultDelegate(), m.width, m.height-6)
-	m.list.Title = "Select Fields (use Space to select multiple)"
+	for _, field := range fields {
+		items = append(items, item(field))
+	}
+
+	m.selectedFields = make(map[string]bool)
+	m.list = list.New(items, fieldItemDelegate{selected: m.selectedFields}, m.width, m.height-6)
+	m.list.Title = title
 	m.list.SetShowStatusBar(false)
 	m.list.SetFilteringEnabled(true)
+}
+
+func (m *Model) initFieldsLoading() {
 	m.selectedFields = make(map[string]bool)
+	m.list = list.New([]list.Item{}, fieldItemDelegate{selected: m.selectedFields}, m.width, m.height-6)
+	m.list.Title = "Loading fields..."
+	m.list.SetShowStatusBar(false)
+	m.list.SetFilteringEnabled(false)
 }
 
 func (m *Model) initFieldsManualInput() {
@@ -782,9 +760,25 @@ type exportProgressMsg struct {
 	done     bool
 }
 
+type fieldsLoadedMsg struct {
+	fields []string
+	err    error
+}
+
+func loadFieldsCmd(client *export.Client, index string) tea.Cmd {
+	return func() tea.Msg {
+		if client == nil {
+			return fieldsLoadedMsg{err: fmt.Errorf("missing export client")}
+		}
+		fields, err := client.GetFields(context.Background(), index)
+		return fieldsLoadedMsg{fields: fields, err: err}
+	}
+}
+
 func startExportCmd(m Model) tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
 		total, err := m.client.Count(ctx, m.conf.Index, export.BuildQuery(m.conf.ElasticVersion, m.conf))
 		if err != nil {
@@ -809,3 +803,29 @@ var (
 	noStyle      = lipgloss.NewStyle()
 	helpStyle    = blurredStyle.Copy()
 )
+
+func (m *Model) shiftInputFocus(lastIndex int, backward bool) tea.Cmd {
+	if backward {
+		m.focus--
+	} else {
+		m.focus++
+	}
+
+	if m.focus > lastIndex {
+		m.focus = 0
+	} else if m.focus < 0 {
+		m.focus = lastIndex
+	}
+
+	cmds := make([]tea.Cmd, lastIndex+1)
+	for i := 0; i <= lastIndex; i++ {
+		if i == m.focus {
+			cmds[i] = m.inputs[i].Focus()
+			m.inputs[i].TextStyle = focusedStyle
+			continue
+		}
+		m.inputs[i].Blur()
+		m.inputs[i].TextStyle = noStyle
+	}
+	return tea.Batch(cmds...)
+}
