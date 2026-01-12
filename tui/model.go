@@ -46,14 +46,14 @@ func (f formatItem) Description() string { return f.desc }
 func (f formatItem) FilterValue() string { return f.format }
 
 type queryTypeItem struct {
-	ty    string
-	desc  string
-	field string
+	queryType string
+	desc      string
+	field     string
 }
 
-func (q queryTypeItem) Title() string       { return q.ty }
+func (q queryTypeItem) Title() string       { return q.queryType }
 func (q queryTypeItem) Description() string { return q.desc }
-func (q queryTypeItem) FilterValue() string { return q.ty }
+func (q queryTypeItem) FilterValue() string { return q.queryType }
 
 type Model struct {
 	step   step
